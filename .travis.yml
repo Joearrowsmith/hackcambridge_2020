@@ -7,7 +7,7 @@ jobs:
       script:
         - python -m venv env
         - source env/bin/active
-        - python -m pip install -r ml_reqs.txt
+        - python -m pip install -r Models/reqs.txt
         - python -m pytest ./Models/
     - stage:
       name: "Test frontend"
@@ -15,7 +15,7 @@ jobs:
       script:
         - python -m venv env
         - source env/bin/active
-        - python -m pip install -r frontend_reqs.txt
+        - python -m pip install -r public/reqs.txt
         - python -m pytest ./public/
     - stage:
       name: "Test backend"
@@ -23,6 +23,6 @@ jobs:
       script:
         - python -m venv env
         - source env/bin/active
-        - python -m pip install -r backend_reqs.txt
+        - python -m pip install -r backend/reqs.txt
         - python -m pytest ./backend/
 
