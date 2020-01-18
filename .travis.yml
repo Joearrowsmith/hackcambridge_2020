@@ -5,24 +5,18 @@ jobs:
       name: "Test ML"
       python: "3.6"
       script:
-        - python -m venv env
-        - source env/bin/active
         - python -m pip install -r Models/reqs.txt
         - python -m pytest ./Models/
     - stage:
       name: "Test frontend"
       python: "3.6"
       script:
-        - python -m venv env
-        - source env/bin/active
         - python -m pip install -r public/reqs.txt
         - python -m pytest ./public/
     - stage:
       name: "Test backend"
       python: "3.6"
       script:
-        - python -m venv env
-        - source env/bin/active
         - python -m pip install -r backend/reqs.txt
         - python -m pytest ./backend/
 
