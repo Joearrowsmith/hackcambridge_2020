@@ -32,11 +32,10 @@ class MultiAgentEnv(gym.Env):
     def __init__(self, death_alpha, bot_type=None):
         self.bot_type = bot_type
         self.fov = (9,9)
-
-        self.action_space = spaces.Discrete(11)
+        self.action_space = spaces.Discrete(10)
         self.observation_space = spaces.Box(low=-2, high=4, shape=self.fov, dtype=np.int32)
 
-        self.death_alpha = 
+        self.death_alpha = death_alpha
         self.death = None # {obs_state, reward, step_number}
         self.step_num = 0
 
