@@ -120,32 +120,8 @@ class MultiAgentEnv(gym.Env):
             else:
                 final_reward = reward
             return self.death['obs_state'], final_reward, True
-        self.tick += 1
-        return output
-
-            
-        
-
-        
-
-        if not done:
-            reward = 1.0
-        elif self.steps_beyond_done is None:
-            # Pole just fell!
-            self.steps_beyond_done = 0
-            reward = 1.0
-        else:
-            if self.steps_beyond_done == 0:
-                logger.warn("You are calling 'step()' even though this environment has already returned done = True. You should always call 'reset()' once you receive 'done = True' -- any further steps are undefined behavior.")
-            self.steps_beyond_done += 1
-            reward = 0.0
-        
         self.step_num += 1
-        return np.array(self.obs_state), reward, done, {}
-
-
-
-
+        return output
 
 
 if __name__=="__main__":
