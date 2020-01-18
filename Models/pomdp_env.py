@@ -24,14 +24,9 @@ intermediate rewards:
 - scared bot: 
     - being attacked: -1
 """
-
-def get_map(fov_size=9):
-    map = np.zeros(fov_size, fov_size)
-    map -= 1
-    return map
-    
+  
 from gym import Env
-
+import numpy as np
 
 class MultiAgentEnv(gym.Env):
     def __init__(self, death_alpha, bot_type=None):
