@@ -52,12 +52,123 @@ def plot_random_paths(N, window_size, grid, n_walks):
 
 def generate_random_map(size=100, window_size=9):
     grid = create_empty_grid(size, window_size)
-    map = plot_random_paths(size, window_size, grid, 10)
-    return map
+    map_game = plot_random_paths(size, window_size, grid, 10)
+    return map_game
+
+
+def create_players(map_game_master, n_teams, n_players_per_team):
+    assert n_teams < 5, "Error: Code cannot handle this amount of teams. Get a better developer!"
+    assert n_teams > 1, "Error: Number of teams needs to be larger than 1!"
+    map_game = map_game_master.copy()
+
+    # Divide board into n_teams equal pieces:
+    N = map_game.shape[0]
+
+    # Define all the x and y coordinates
+    y_coords = np.tile(np.arange(N), N).reshape(N, N)
+    x_coords = y_coords.copy().T
+
+    if n_teams == 2:
+        teams_dict = {1: [], 2: []}
+        # Divide grid in to two:
+        x_coords1 = np.arange(N//2+1)
+        x_coords2 = np.arange(N//2+1, N)
+
+        i1 = n_players_per_team
+        i2 = n_players_per_team
+
+        while i1 > 0:
+            id1 = (np.random.choice(x_coords1), np.random.choice(np.arange(N)))
+            if (map_game[id1] == 0) and (map_game[id1] != 1):
+                map_game[id1] = 1
+                i1 -= 1
+                teams_dict[1].append(id1)
+
+        while i2 > 0:
+            id2 = (np.random.choice(x_coords2), np.random.choice(np.arange(N)))
+            if (map_game[id2] == 0) and (map_game[id2] != 1):
+                map_game[id2] = 1
+                i2 -= 1
+                teams_dict[2].append(id2)
+
+    elif n_teams == 3:
+        teams_dict = {1: [], 2: [], 3: []}
+        # Divide grid in to two:
+        x_coords1 = np.arange(N//2+1)
+        x_coords2 = np.arange(N//2+1, N)
+        y_coords1 = np.arange(N//2+1)
+        y_coords2 = np.arange(N//2+1, N)
+
+        i1 = n_players_per_team
+        i2 = n_players_per_team
+        i3 = n_players_per_team
+
+        while i1 > 0:
+            id1 = (np.random.choice(x_coords1), np.random.choice(y_coords1))
+            if (map_game[id1] == 0) and (map_game[id1] != 1):
+                map_game[id1] = 1
+                i1 -= 1
+                teams_dict[1].append(id1)
+
+        while i2 > 0:
+            id2 = (np.random.choice(x_coords1), np.random.choice(y_coords2))
+            if (map_game[id2] == 0) and (map_game[id2] != 1):
+                map_game[id2] = 1
+                i2 -= 1
+                teams_dict[2].append(id2)
+
+        while i3 > 0:
+            id3 = (np.random.choice(x_coords2), np.random.choice(np.arange(N)))
+            if (map_game[id3] == 0) and (map_game[id3] != 1):
+                map_game[id3] = 1
+                i3 -= 1
+                teams_dict[3].append(id3)
+
+    elif n_teams == 4:
+        teams_dict = {1: [], 2: [], 3: [], 4: []}
+        # Divide grid in to two:
+        x_coords1 = np.arange(N//2+1)
+        x_coords2 = np.arange(N//2+1, N)
+        y_coords1 = np.arange(N//2+1)
+        y_coords2 = np.arange(N//2+1, N)
+
+        i1 = n_players_per_team
+        i2 = n_players_per_team
+        i3 = n_players_per_team
+        i4 = n_players_per_team
+
+        while i1 > 0:
+            id1 = (np.random.choice(x_coords1), np.random.choice(y_coords1))
+            if (map_game[id1] == 0) and (map_game[id1] != 1):
+                map_game[id1] = 1
+                i1 -= 1
+                teams_dict[1].append(id1)
+
+        while i2 > 0:
+            id2 = (np.random.choice(x_coords2), np.random.choice(y_coords1))
+            if (map_game[id2] == 0) and (map_game[id2] != 1):
+                map_game[id2] = 1
+                i2 -= 1
+                teams_dict[2].append(id2)
+
+        while i3 > 0:
+            id3 = (np.random.choice(x_coords1), np.random.choice(y_coords2))
+            if (map_game[id3] == 0) and (map_game[id3] != 1):
+                map_game[id3] = 1
+                i3 -= 1
+                teams_dict[3].append(id3)
+
+        while i4 > 0:
+            id4 = (np.random.choice(x_coords2), np.random.choice(y_coords2))
+            if (map_game[id4] == 0) and (map_game[id4] != 1):
+                map_game[id4] = 1
+                i4 -= 1
+                teams_dict[4].append(id4)
+    return teams_dict
 
 
 if __name__ == "__main__":
-    map = generate_random_map(size=9)
+    map_game = generate_random_map(size=100)
     figure = plt.figure(figsize=(10, 10))
-    plt.pcolor(map, cmap='gray')
+    plt.imshow(map_game, cmap='gray')
     plt.show()

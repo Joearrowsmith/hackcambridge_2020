@@ -3,6 +3,7 @@ import sklearn.preprocessing
 import warnings
 warnings.filterwarnings("ignore")
 
+
 def encode_grid_onehot(grid, num_categories=7):
     """Encodes Grid using One Hot convention."""
     window_size = grid.shape[0]
@@ -14,6 +15,16 @@ def encode_grid_onehot(grid, num_categories=7):
     dense_shape = (window_size, window_size, num_categories)
     grid_encoded = enc.fit_transform(grid+2).reshape(dense_shape)
     return grid_encoded
+
+
+def encode_word(word):
+    assert len(word) == 11, "Error: check length of word"
+    assert isinstance(word, str), "Error: word is not a string"
+    word_list = list(word)
+    enc = sklearn.preprocessing.LabelEncoder().fit((" ", "a", "b", "c", "d"))
+    word = enc.transform(word_list)
+    return word
+
 
 
 def main():
