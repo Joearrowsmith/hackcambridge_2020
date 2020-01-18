@@ -167,8 +167,35 @@ def create_players(map_game_master, n_teams, n_players_per_team):
     return teams_dict
 
 
+def map_shrink(map_game):
+    N = map_game.shape[0]
+    boundary_index = np.where(map_game == -2)[0][0]
+    boundary_index
+
+    b1 = boundary_index + 1
+    b2 = - (b1 + 1)
+
+    map_game[b1, b1:-b1] = -2  # TOP
+    map_game[b1:-b1, b1] = -2  # LEFT
+    map_game[b1:-b1, b2] = -2  # LEFT
+    map_game[b2, b1:-b1] = -2  # BOTTOM
+
+    map_game[b1-1, :] = -1  # TOP
+    map_game[:, b1-1] = -1  # LEFT
+    map_game[:, b2+1] = -1  # LEFT
+    map_game[b2+1, :] = -1  # BOTTOM
+    return map_game
+
+
+
 if __name__ == "__main__":
     map_game = generate_random_map(size=100)
     figure = plt.figure(figsize=(10, 10))
     plt.imshow(map_game, cmap='gray')
     plt.show()
+
+    for i in range(10):
+        map_game = map_shrink(map_game)
+        figure = plt.figure(figsize=(10, 10))
+        plt.imshow(map_game, cmap='gray')
+        plt.show()
