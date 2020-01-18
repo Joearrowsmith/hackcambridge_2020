@@ -29,18 +29,18 @@ from gym import Env
 import numpy as np
 
 class MultiAgentEnv(gym.Env):
-    def __init__(self, death_alpha, bot_type=None):
+    def __init__(self, death_gamma, bot_type=None):
         self.bot_type = bot_type
         self.fov = (9,9)
         self.action_space = spaces.Discrete(10)
         self.observation_space = spaces.Box(low=-2, high=4, shape=self.fov, dtype=np.int32)
 
-        self.death_alpha = death_alpha
+        self.death_gamma = death_gamma
         self.death = None # {obs_state, reward, step_number}
         self.step_num = 0
 
     def calculate_reward(self, die=False, team_die=False, 
-                         game_over=None, bot_type=None):
+                         bot_type=None):
         current_reward = 0
         if bot_type == "selfish":
             if die:
@@ -57,26 +57,28 @@ class MultiAgentEnv(gym.Env):
                 current_reward -= 2
             if team_die:
                 current_reward -= 2
-        
-        if game_over != None:
-            assert type(game_over) is dict
-            position = game_over['team_position']
-            survived = game_over['survived']
-            assert position > 0
-            if position == 1:
-                current_reward += 10
-            else:
-                assert survived == False, "not possible for losing team to have a playing left"
-                if position == 2:
-                    current_reward += 5
-                elif position == 3:
-                    current_reward += 2
-                else:
-                    current_reward -= 0
-            if survived:
-                current_reward += 5        
         return current_reward
 
+    def get_team_reward(self, game_over):
+        current_reward = 0
+        assert type(game_over) is dict
+        position = game_over['team_position']
+        survived = game_over['survived']
+        assert position > 0
+        if position == 1:
+            current_reward += 10
+        else:
+            assert survived == False, "not possible for losing team to have a playing left"
+            if position == 2:
+                current_reward += 5
+            elif position == 3:
+                current_reward += 0
+            else:
+                current_reward -= 5
+        if survived:
+            current_reward += 5 
+        assert current_reward <= 15
+        return current_reward  
 
     def get_next_obs_state(self, action):
         raise NotImplementedError
@@ -103,7 +105,7 @@ class MultiAgentEnv(gym.Env):
             ## player known to be dead, dont append till game over
             output = None
         else:
-            reward = self.calculate_reward(dead, False, game_over=)
+            reward = self.calculate_reward(dead, False)
             if dead:
                 ## player detected dead, dont append till game over
                 self.death['step_num'] = self.step_num
@@ -118,11 +120,12 @@ class MultiAgentEnv(gym.Env):
             assert dead, "for a non output player must be dead"
 
         if game_over:
-            final_reward = None
+            ## need to get final reward from team
+            team_reward = self.get_team_reward(game_over=game_over)
             if self.death:
-                final_reward = self.death['reward'] * self.death_alpha**(self.step_num - self.death['step_num'] ## this will reduce the reward, a longer time results in less reward.
+                final_reward = self.death['reward'] + team_reward * self.death_gamma**(self.step_num - self.death['step_num'] ## this will reduce the reward, a longer time results in less reward.
             else:
-                final_reward = reward
+                final_reward = team_reward
             return self.death['obs_state'], final_reward, True
         self.step_num += 1
         return output

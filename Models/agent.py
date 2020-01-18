@@ -14,19 +14,19 @@ import tensorflow as tf
 
 class DQNAgent:
     def __init__(self):
-        self.state_size = (9,9)
-        self.message_state_size = 4
+        self.grid_state_size = (9, 9, 7) # 9 x 9, 7 one hot
+        self.message_state_size = (4,11) # 4 directions, 2 messages at most seperated by ;
         self.action_size = 10
 
+        self.recurrent_memory = 25
         self.memory = deque(maxlen=1000)
 
-        
-
         self.gamma = 0.95    # discount rate
-        self.epsilon = 1.0  # exploration rate
+        self.epsilon = 1.0   # exploration rate
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.99
         self.learning_rate = 0.001
+
         self.model = self._build_model()
         self.target_model = self._build_model()
         self.update_target_model()
@@ -45,8 +45,18 @@ class DQNAgent:
 
         return K.mean(tf.where(cond, squared_loss, quadratic_loss))
 
+
+
     def _build_model(self):
+        grid_inputs = tf.keras.Input(shape=(784,), name='grid_inputs')
+        
+
+        
+        
         # Neural Net for Deep-Q learning Model
+
+
+
         model = Sequential()
         model.add(Dense(24, input_dim=self.state_size, activation='relu'))
         model.add(Dense(24, activation='relu'))
