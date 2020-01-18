@@ -6,6 +6,7 @@ jobs:
       python: "3.6"
       script:
         - python -m venv env
+	- ls -a
         - source env/bin/active
         - python -m pip install -r Models/reqs.txt
         - python -m pytest ./Models/
@@ -14,6 +15,7 @@ jobs:
       python: "3.6"
       script:
         - python -m venv env
+	- ls -a
         - source env/bin/active
         - python -m pip install -r public/reqs.txt
         - python -m pytest ./public/
@@ -22,6 +24,7 @@ jobs:
       python: "3.6"
       script:
         - python -m venv env
+	- ls -a
         - source env/bin/active
         - python -m pip install -r backend/reqs.txt
         - python -m pytest ./backend/
