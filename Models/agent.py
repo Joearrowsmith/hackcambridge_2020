@@ -47,25 +47,43 @@ class DQNAgent:
 
 
 
-    def _build_model(self, time_steps=25, window_onehot_shape=(9,9,7), dropout=0.0, recurrent_dropout=0.0):
+    def _build_model(self, batch_size, time_steps=25, window_onehot_shape=(9,9,7), dropout=0.0, recurrent_dropout=0.0):
         ## (samples, time, rows, cols, channels)
 
+        self.units = 5
+
+        # Grid --------------
         self.grid_input_shape = (None, time_steps, *window_onehot_shape)
         self.grid_inputs = tf.keras.Input(shape=grid_input_shape, name='reccurrent_grid_inputs')
 
-
-        self.text_input_shape = (None, )
-
-        self.layer_1 = tf.keras.layers.ConvLSTM2D(5, (3,3), padding="same", activation="relu", recurrent_activation="tanh", 
+        self.grid_layer_1 = tf.keras.layers.ConvLSTM2D(self.units, (3,3), padding="same", activation="relu", recurrent_activation="tanh", 
                 dropout=dropout, recurrent_dropout=dropout, return_sequences=True, stateful=False)
         self.maxpool_1 = tf.keras.layers.MaxPool2D((2,2))
 
-        self.layer_2 = tf.keras.layers.ConvLSTM2D(5, (3,3), padding="same", activation="relu", recurrent_activation="tanh", 
+        self.grid_layer_2 = tf.keras.layers.ConvLSTM2D(self.units, (3,3), padding="same", activation="relu", recurrent_activation="tanh", 
                 dropout=dropout, recurrent_dropout=dropout, return_sequences=True, stateful=False)
         self.maxpool_2 = tf.keras.layers.MaxPool2D((2,2))
         self.flat = tf.keras.layers.Flatten()
+        # ------------------
 
-        self.dense_merge = tf.keras.layers.Dense(5)
+        # Embedding --------
+        self.vocab_size = 5
+        self.text_input_length = 11 ## messages need to be fed in reverse
+
+        embedding_dim = 4
+
+        self.embedder = tf.keras.layers.Embedding(self.vocab_size, embedding_dim, batch_input_shape=[batch_size, None])
+
+        self.text_lstm_1 = tf.keras.layers(self.units, return_sequences=True,
+                        stateful=True,
+                        recurrent_initializer='glorot_uniform')
+        self.text_dense = tf.keras.layers.Dense(vocab_size)
+
+        
+        # ------------------
+
+
+        self.dense_merge = tf.keras.layers.Dense(self.units)
 
 
 
