@@ -1,17 +1,18 @@
 import numpy as np
-import tensorflow as tf
 import sklearn.preprocessing
-
+import warnings
+warnings.filterwarnings("ignore")
 
 def encode_grid_onehot(grid, num_categories=7):
     """Encodes Grid using One Hot convention."""
     window_size = grid.shape[0]
+    distinct_categories = np.tile(np.arange(7), window_size).reshape(window_size, num_categories)
     enc = sklearn.preprocessing.OneHotEncoder(
                 categories=distinct_categories,
                 sparse=False,
                 dtype=np.int32)
     dense_shape = (window_size, window_size, num_categories)
-    grid_encoded = enc.fit_transform(grid).reshape(dense_shape)
+    grid_encoded = enc.fit_transform(grid+2).reshape(dense_shape)
     return grid_encoded
 
 
@@ -22,10 +23,6 @@ def main():
     # Random players scattered about
     window_size = 9
     center_index = window_size//2
-    distinct_categories = np.tile(np.array((-2, -1, 0, 1, 2, 3, 4),
-                                  dtype=np.int32),
-                                  (window_size, 1))
-
     GRID = np.zeros((window_size, window_size), dtype=np.int32)
     GRID[0] = -1
     GRID[1] = -2
