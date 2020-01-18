@@ -78,12 +78,22 @@ class MultiAgentEnv(gym.Env):
         return current_reward
 
 
+    def get_next_obs_state(self, action):
+        raise NotImplementedError
+        """
+        obs_state: [7x7 np.array, 4x20 character message array]
+        dead: bool if this agent is dead
+        game_over: None unless game over then, team ranking
+        """
+        return obs_state, dead, game_over
+
+
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         
         obs_state, dead, game_over = get_next_obs_state(action)
         """
-        obs_state: 7x7 np.array
+        obs_state: [7x7 np.array, 4x20 character message array]
         dead: bool if this agent is dead
         game_over: None unless game over then, team ranking
         """
@@ -119,8 +129,6 @@ class MultiAgentEnv(gym.Env):
 
 
 if __name__=="__main__":
-    print(get_map())
-
     agent_env = MultiAgentEnv(None)
     print(agent_env.action_space.sample())
 
