@@ -1,4 +1,29 @@
+/*
+-2 Border
+-1 void
+0 Ground
+1 Team
+2 Opponents largest
+3 Second largest oponent
+4 Other
+Self place you're on
+*/
 
+var map = [[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+[-1, -1, -1, -2, -2, -2, -2, -2, -2, -2, -2, -2, -1, -1, -1],
+[-1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0, -2, -1, -1, -1],
+[-1, -1, -1, -2,  0,  1,  0,  0,  0,  0,  0, -2, -1, -1, -1],
+[-1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0, -2, -1, -1, -1],
+[-1, -1, -1, -2,  0,  1,  0,  0,  0,  0,  0, -2, -1, -1, -1],
+[-1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0, -2, -1, -1, -1],
+[-1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0, -2, -1, -1, -1],
+[-1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0, -2, -1, -1, -1],
+[-1, -1, -1, -2, -2, -2, -2, -2, -2, -2, -2, -2, -1, -1, -1],
+[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+ [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]];
 
 d3.selection.prototype.size = function() {
     var n = 0;
@@ -13,8 +38,8 @@ window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
 		}
 	});
 
-var w = 960, // width of map
-    h = 500, // height of map
+var w = 300, // width of map
+    h = 300, // height of map
     sz = 20, // cell size
     r = sz / 2, // radius for circles based on cell
     sr = r * r, // radius^2
@@ -54,23 +79,10 @@ var cells = d3.range(0, rows * cols).map(function (d) {
     r: row,
     c: col,
     x: col * sz + r,
-    y: row * sz + r
+    y: row * sz + r,
+    type: map[col][row]
   };
 });
-
-var balls = d3.range(0, n).map(function (d) {
-    var bx = (w - sz * 4) * Math.random() + sz * 2;
-    var by = (h - sz * 4) * Math.random() + sz * 2;
-    var ball = {
-        x: bx,
-        y: by,
-        px: bx + v * (Math.random() > .5 ? 1 : -1),
-        py: by + v * (Math.random() > .5 ? 1 : -1),
-        id: d,
-        isMoving: true
-      };
-    return ball;
-  });
 
 // main svg setup
 var svg = d3.select("body").append("svg")
@@ -105,8 +117,22 @@ var topRightCell = function(c) { return cells[Math.max(0, c.r - 1) * cols + Math
 var cell = svg.selectAll(".cell")
   .data(cells)
   .enter().append("rect")
-  .attr("class", function(d) { return "cell " + ((d.isWall = d.c == 0 || d.c == cols - 1 || d.r == 0 || d.r == rows - 1) ? "wall" : "ground"); })
+  .attr("class", function(d) {
+    if(d.type == -2) {
+      // is border
+      return "cell " + "wall";
+    }else if(d.type == -1) {
+      // is void
+      return "cell " + "void";
+    }else if(d.type == 0) {
+      // is solid ground
+      return "cell " + "ground";
+    } else {
+      return "cell " + "unknown";
+    }
+  })
   .attr("layer", "main-layer")
+  .attr("grid", function(d){return d.type;})
   .attr("cellType", function(d) { return ((d.isWall = d.c == 0 || d.c == cols - 1 || d.r == 0 || d.r == rows - 1) ? "wall" : "ground"); })
   .attr("x", rectx)
   .attr("y", recty)
@@ -116,8 +142,22 @@ var cell = svg.selectAll(".cell")
     d.elnt = d3.select(this);
   });
 
+  /*
 // Creating fog of war
 var fog = svg.selectAll(".fog")
+  .data(cells)
+  .enter().append("rect")
+  .attr("class", "fog-of-war")
+  .attr("x", function(d){ d })
+  .attr("y", recty)
+  .attr("id", function(d){ return String(d.x-r)+String(d.y-r);})
+  .attr("width", sz)
+  .attr("height", sz)
+  .each(function(d) {
+    d.elnt = d3.select(this);
+  });
+*/
+var cellz = svg.selectAll('.cellz')
   .data(cells)
   .enter().append("rect")
   .attr("class", "fog-of-war")
@@ -126,21 +166,32 @@ var fog = svg.selectAll(".fog")
   .attr("id", function(d){ return String(d.x-r)+String(d.y-r);})
   .attr("width", sz)
   .attr("height", sz)
-  .each(function(d) {
-    d.elnt = d3.select(this);
-  });
 
 
 /* ------------------------------- */
 // THE PLAYER
-/*
+
 var playerLocs = [
   { "x_axis": 40, "y_axis": 40, "color" : "green" },
   { "x_axis": 80, "y_axis": 100, "color" : "purple"},
   { "x_axis": 400, "y_axis": 200, "color" : "red"}];
-*/
+
+
+var players = svg.selectAll("player")
+  .data(playerLocs)
+  .enter()
+  .append("rect")
+  .attr("transform", "translate(0,0)")
+  .attr("x", function (d) { return d.x_axis; })
+  .attr("y", function (d) { return d.y_axis; })
+  .attr("type", 'player')
+  .attr("width", 20)
+  .attr("height", 20)
+  .style("fill", function(d) { return d.color; });
+
+
 var playerLoc = [{ "x_axis": 200, "y_axis": 100, "color" : "green" }];
-var player = svg.selectAll("players")
+var player = svg.selectAll("player")
   .data(playerLoc)
   .enter()
   .append("rect")
@@ -212,9 +263,10 @@ $(document).keydown(function(e) {
 });
 
 /* ------------------------------- */
-
+// BORDER CLOSING IN
+/*
 var wallThickness = 1;
-setInterval(wallsMovingIn, 3000);
+setInterval(wallsMovingIn, 10000);
 
 function wallsMovingIn() {
   cell.attr("class", function(d) {
@@ -225,6 +277,38 @@ function wallsMovingIn() {
     }
   });
   wallThickness++;
+}
+*/
+
+/* ------------------------------- */
+var playerz = d3.selectAll(players);
+var simulation = d3.forceSimulation(players)
+  .force('charge', d3.forceManyBody().strength(5))
+//  .force('center', d3.forceCenter())
+  .force('collision', d3.forceCollide().radius(function(d) {
+    return d.r;
+  }))
+  .on('tick', ticked);
+
+function ticked() {
+  var u = d3.select('svg')
+    .selectAll('circle')
+    .data(players)
+
+  u.enter()
+    .append('circle')
+    .attr('r', function(d) {
+      return d.radius
+    })
+    .merge(u)
+    .attr('cx', function(d) {
+      return d.x
+    })
+    .attr('cy', function(d) {
+      return d.y
+    })
+
+  u.exit().remove();
 }
 /* ------------------------------- */
 function previewLocation(c1, p) {
