@@ -8,7 +8,7 @@ jobs:
         - python -m venv env
         - source env/bin/active
         - python -m pip install -r ml_reqs.txt
-        - python -m pytest
+        - python -m pytest ./Models/
     - stage:
       name: "Test frontend"
       python: "3.6"
@@ -16,7 +16,7 @@ jobs:
         - python -m venv env
         - source env/bin/active
         - python -m pip install -r frontend_reqs.txt
-        - python -m pytest
+        - python -m pytest ./public/
     - stage:
       name: "Test backend"
       python: "3.6"
@@ -24,4 +24,5 @@ jobs:
         - python -m venv env
         - source env/bin/active
         - python -m pip install -r backend_reqs.txt
-        - python -m pytest
+        - python -m pytest ./backend/
+
