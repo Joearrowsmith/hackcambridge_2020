@@ -25,3 +25,4 @@ jobs:
         - source env/bin/active
         - python -m pip install -r backend_reqs.txt
         - python -m pytest
+
