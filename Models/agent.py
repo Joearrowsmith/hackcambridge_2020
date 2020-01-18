@@ -74,9 +74,8 @@ class DQNAgent:
 
         self.embedder = tf.keras.layers.Embedding(self.vocab_size, embedding_dim, batch_input_shape=[batch_size, None])
 
-        self.text_lstm_1 = tf.keras.layers(self.units, return_sequences=True,
-                        stateful=True,
-                        recurrent_initializer='glorot_uniform')
+        self.text_lstm_1 = tf.keras.layers.LSTM(self.units, return_sequences=True,
+                        stateful=True, recurrent_initializer='glorot_uniform')
         self.text_dense = tf.keras.layers.Dense(vocab_size)
 
         
@@ -84,10 +83,6 @@ class DQNAgent:
 
 
         self.dense_merge = tf.keras.layers.Dense(self.units)
-
-
-        
-
 
         
         # Neural Net for Deep-Q learning Model
