@@ -47,11 +47,28 @@ class DQNAgent:
 
 
 
-    def _build_model(self):
-        grid_inputs = tf.keras.Input(shape=(784,), name='grid_inputs')
-        
+    def _build_model(self, time_steps=25, window_onehot_shape=(9,9,7), dropout=0.0, recurrent_dropout=0.0):
+        ## (samples, time, rows, cols, channels)
 
-        
+        self.grid_input_shape = (None, time_steps, *window_onehot_shape)
+        self.grid_inputs = tf.keras.Input(shape=grid_input_shape, name='reccurrent_grid_inputs')
+
+
+        self.text_input_shape = (None, )
+
+        self.layer_1 = tf.keras.layers.ConvLSTM2D(5, (3,3), padding="same", activation="relu", recurrent_activation="tanh", 
+                dropout=dropout, recurrent_dropout=dropout, return_sequences=True, stateful=False)
+        self.maxpool_1 = tf.keras.layers.MaxPool2D((2,2))
+
+        self.layer_2 = tf.keras.layers.ConvLSTM2D(5, (3,3), padding="same", activation="relu", recurrent_activation="tanh", 
+                dropout=dropout, recurrent_dropout=dropout, return_sequences=True, stateful=False)
+        self.maxpool_2 = tf.keras.layers.MaxPool2D((2,2))
+        self.flat = tf.keras.layers.Flatten()
+
+        self.dense_merge = tf.keras.layers.Dense(5)
+
+
+
         
         # Neural Net for Deep-Q learning Model
 
