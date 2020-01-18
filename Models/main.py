@@ -32,21 +32,18 @@ def get_map(fov_size=9):
     
 from gym import Env
 
+
 class MultiAgentEnv(gym.Env):
-    def __init__(self, bot_type):
+    def __init__(self, death_alpha, bot_type=None):
         self.bot_type = bot_type
         self.fov = (9,9)
 
         self.action_space = spaces.Discrete(11)
         self.observation_space = spaces.Box(low=-2, high=4, shape=self.fov, dtype=np.int32)
-        
-        self.obs_state = None
 
-        self.death_step_num = None
-
-        self.steps_beyond_done = None
-        self.reward = 0
-        self.tick = 0
+        self.death_alpha = 
+        self.death = None # {obs_state, reward, step_number}
+        self.step_num = 0
 
     def calculate_reward(self, die=False, team_die=False, 
                          game_over=None, bot_type=None):
@@ -86,25 +83,50 @@ class MultiAgentEnv(gym.Env):
                 current_reward += 5        
         return current_reward
 
+
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
-        prev_ob_state = self.obs_state
-
-        self.obs_state, dead, game_over = get_next_obs_state(action)
-        ## need to apply a decayed game reward for depending on how long the game lasts after they die
-
-        if self.death_step_num is None:
-            if dead:
-                self.death_step_num = tick
-            
+        
+        obs_state, dead, game_over = get_next_obs_state(action)
+        """
+        obs_state: 7x7 np.array
+        dead: bool if this agent is dead
+        game_over: None unless game over then, team ranking
+        """
+        output = None
+        reward = None
+        if self.death:
+            ## player known to be dead, dont append till game over
+            output = None
         else:
+            reward = self.calculate_reward(dead, False, game_over=)
+            if dead:
+                ## player detected dead, dont append till game over
+                self.death['step_num'] = self.step_num
+                self.death['obs_state'] = obs_state
+                self.death['reward'] = reward
+                output = None
+            else:
+                ## not dead
+                output = obs_state, reward, done
 
-        done = ## detect dead, check matched with server dead
-        done =  x < -self.x_threshold \
-                or x > self.x_threshold \
-                or theta < -self.theta_threshold_radians \
-                or theta > self.theta_threshold_radians
-        done = bool(done)
+        if output None:
+            assert dead, "for a non output player must be dead"
+
+        if game_over:
+            final_reward = None
+            if self.death:
+                final_reward = self.death['reward'] * self.death_alpha**(self.step_num - self.death['step_num'] ## this will reduce the reward, a longer time results in less reward.
+            else:
+                final_reward = reward
+            return self.death['obs_state'], final_reward, True
+        self.tick += 1
+        return output
+
+            
+        
+
+        
 
         if not done:
             reward = 1.0
@@ -118,7 +140,7 @@ class MultiAgentEnv(gym.Env):
             self.steps_beyond_done += 1
             reward = 0.0
         
-        self.tick += 1
+        self.step_num += 1
         return np.array(self.obs_state), reward, done, {}
 
 
