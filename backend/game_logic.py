@@ -8,9 +8,11 @@ import server
 from time import sleep
 
 class Player:
-    def __init__(self, x, y):
+    def __init__(self, uid, x, y, team_id):
+        self.uid = uid
         self.x = x
         self.y = y
+        self.team_id = team_id
 
 class Game:
 
@@ -28,24 +30,60 @@ class Game:
                 "push_down"  : self.push_player_down,
                 }
         self.players = {}
+        self.tick_update_list = []
 
-    def add_player(self, id_val):
-        self.players[id_val] = Player(1, 2)
+    def add_human_player(self, id_val):
+        self.players[id_val] = Player(id_val, 5, 5, id_val)
+
+    def handle_message(self, id_val, message):
+        message = json.loads(message)
+        request_resp = (None, None)
+        if message["request"] != None:
+            request_resp = self.handle_request(id_val, message["request"])
+        if message["action"] != None:
+            self.handle_action(id_val, message["action"])
+        return request_resp
+
+    def handle_request(self, id_val, request):
+        if request == "map":
+            return "map", self.board
+            
+    def handle_action(id_val, action):
+        self.actions[action](self.players[id_val])
+
+    def get_positions(self):
+        deets = []
+        for ids, p in self.players:
+            deets.append({"id":p.uid,"x":p.x,"y":p.y,"team_id":p.team_id})
+        return deets
+
+    #def get_update(self):
+    #    return self.tick_update_list
+
+    def draw_grid(self):
+        render_copy = self.board.copy()
+        for uid, p in self.players.items():
+            render_copy[p.x][p.y] = 1
+        return render_copy
 
     def generate_map(self):
-        return np.loadtxt("grid_example.txt")
+        return np.loadtxt("map_1010_filled.txt")
 
     def move_player_left(self, player):
         print("Moving left")
+        p.y -= 1
 
     def move_player_right(self, player):
         print("Moving right")
+        p.y += 1
 
     def move_player_up(self, player):
         print("Moving up")
+        p.x -= 1
 
     def move_player_down(self, player):
         print("Moving down")
+        p.x += 1
 
     def handle_message(self, player, message):
         print(f"Message: {message}")

@@ -9,16 +9,16 @@ async def main(game, websocket, path):
     ws_id = id(websocket)
     if ws_id not in connections:
         uID = str(uuid.uuid4())
-        game.add_player(ws_id) 
+        game.add_human_player(ws_id) 
         connections[ws_id] = {
             'sock' : websocket,
             'uID' : uID,
-            'action' : "",
             'message' : "",
         }
 
 
     print(f"Responding to {ws_id}")
+    
 
     # Unique ID for the game
     uIDJson = json.dumps({'type': 'uID', 'uID': ws_id})
@@ -28,9 +28,7 @@ async def main(game, websocket, path):
     try:
         async for message in websocket:
             print(f"New action: {message}")
-            connections[ws_id]["action"] = message
-
-            #data = json.loads(message)
+            connections[ws_id]["message"] = message
 
             '''
             can do a json data type with a type field
@@ -49,13 +47,22 @@ async def main(game, websocket, path):
 
 async def game_tick(game):
     while True:
+        responses = {}
         for player_id, vals in connections.items():
-            act = vals["action"]
-            if act == "message": 
-                game.message(player_id, vals["message"])
-            elif act in game.actions:
-                game.actions[act](player_id)
-            vals["action"] = ""
+            responses[player_id] = game.handle_message(player_id, vals["message"])
+
+        #update = game.get_update()
+        player_positions = game.get_positions()
+
+        for player_id, resp in responses.items():
+            reply = {"response" : resp[0],
+                     "response_data" : resp[1],
+                     "update" : None
+                     "positions" : player_positions
+                     }
+
+            connections[player_id]["sock"].send(reply)
+
         await asyncio.sleep(0.05)
 
 
