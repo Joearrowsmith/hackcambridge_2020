@@ -8,8 +8,8 @@ import Models.grid_functions
 
 
 MAP = backend.grid.generate_random_map()
-MAP_onehot = Models.grid_functions.encode_grid_onehot(MAP)
-window_onehot = MAP_onehot[34:43, 34:43]
+window = MAP[34:43, 34:43]
+window_onehot = Models.grid_functions.encode_grid_onehot(window)
 
 # Building CNN with 3 convolutional
 model = models.Sequential()

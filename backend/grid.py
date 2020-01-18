@@ -57,7 +57,7 @@ def generate_random_map(size=100, window_size=9):
 
 
 if __name__ == "__main__":
-    map = generate_random_map()
+    map = generate_random_map(size=9)
     figure = plt.figure(figsize=(10, 10))
     plt.pcolor(map, cmap='gray')
     plt.show()
