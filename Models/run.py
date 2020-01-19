@@ -1,6 +1,7 @@
 
 from pomdp_env import MultiAgentEnv
 from agent_no_text import DRQNAgent
+import numpy as np
 
 def gen_teams(num_teams, num_players, death_gamma, model):
     teams = {}
@@ -12,10 +13,20 @@ def gen_teams(num_teams, num_players, death_gamma, model):
         teams[f'ai_team_{t}'] = team
 
 
-def get_state(team_name, player_idx):
-    fov_9by9 = ## need to get this from server
-    messages = ['','','','']
-    return [fov_9by9, messages]
+def get_state(team_name, player_idx, action):
+    """
+    obs_state: [9x9 np.array, 4x20 character message array]
+    dead: bool if this agent is dead
+    game_over: None unless game over then, team ranking
+    """
+    big = np.genfromtxt("map_1010_filled.txt", delimiter=" ", dtype=np.int32)
+    
+    fov_9by9 = big[-9:,-9:]    ## need to get this from server
+    messages = ['','','','']   ## need to get this from server
+
+    dead, game_over = False, None     ## need to get this from server
+
+    return [fov_9by9, messages], dead, game_over
 
 
 def run_game(num_teams = 3, num_players = 2):
@@ -27,7 +38,7 @@ def run_game(num_teams = 3, num_players = 2):
     ## get initial game state
     for team_name in teams:
         for player_idx, p in enumerate(teams[team_name]):
-            p.get
+            p.get_state
             
 
 
