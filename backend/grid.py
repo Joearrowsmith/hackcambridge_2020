@@ -200,7 +200,7 @@ if __name__ == "__main__":
     plt.imshow(map_game, cmap='gray')
     plt.show()
 
-    for i in range(28):
+    for i in range(19):
         map_game = map_shrink(map_game)
         figure = plt.figure(figsize=(10, 10))
         plt.imshow(map_game, cmap='gray')
