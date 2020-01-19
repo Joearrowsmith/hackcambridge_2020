@@ -9,14 +9,53 @@
 Self place you're on
 */
 
+d3.selection.prototype.size = function() {
+  var n = 0;
+  this.each(function() { ++n; });
+  return n;
+};
+
+var level = 1;
+window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+  if (key == "level") {
+    level = +value;
+  }
+});
+
+var w = 66*20, // width of map
+  h = 66*20, // height of map
+  sz = 20, // cell size
+  r = sz / 2, // radius for circles based on cell
+  sr = r * r, // radius^2
+  ssz = sz * sz, // cell^2
+  fogCells = 9,
+  v = 3,
+  n = level + 1,
+  playerIds = new Set([]),
+  myid = 0,
+  mapRender = false,
+  t = 5000;
+
+var rows = Math.ceil(h / sz);
+var cols = Math.ceil(w / sz);
+
+function updateMap(map) {
+  w = map.length * sz;
+  h = map[0].length * sz;
+  rows = Math.ceil(h / sz);
+  cols = Math.ceil(w / sz);
+}
+
+
+// default map
 var map = [[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
 [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
 [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
 [-1, -1, -1, -2, -2, -2, -2, -2, -2, -2, -2, -2, -1, -1, -1],
 [-1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0, -2, -1, -1, -1],
-[-1, -1, -1, -2,  0,  1,  0,  0,  0,  0,  0, -2, -1, -1, -1],
 [-1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0, -2, -1, -1, -1],
-[-1, -1, -1, -2,  0,  1,  0,  0,  0,  0,  0, -2, -1, -1, -1],
+[-1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0, -2, -1, -1, -1],
+[-1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0, -2, -1, -1, -1],
 [-1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0, -2, -1, -1, -1],
 [-1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0, -2, -1, -1, -1],
 [-1, -1, -1, -2,  0,  0,  0,  0,  0,  0,  0, -2, -1, -1, -1],
@@ -25,64 +64,54 @@ var map = [[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
 [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
  [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]];
 
-d3.selection.prototype.size = function() {
-    var n = 0;
-    this.each(function() { ++n; });
-    return n;
+var ws = new WebSocket("ws://5b3c7b24.eu.ngrok.io");
+
+// END OF GLOBAL VARIABLES
+/* ----------------------------- */
+
+// Count the number of messages received from websocket server
+ws.onopen = function() {
+  // this might have to go into onmessage
+  var innit = JSON.stringify(
+    {"type":"human", "request":"map", "playerid":"","action":null}
+  );
+  ws.send(innit);
+
+  // TO DO: UPDATE THE MAP -- create a functions
+
+  ws.onmessage = function(event) {
+    var dataJSON = JSON.parse(event.data);
+    console.log(dataJSON);
+    if(dataJSON.type == "uID") myid = dataJSON.uID;
+
+    if(dataJSON.response == "map") {
+      //map = dataJSON.response_data;
+      //updateDimensions(dataJSON.response_data);
+      updateMap(dataJSON.response_data);
+      createMap(dataJSON.response_data);
+    }
+
+    if(mapRender == true) {
+      dataJSON.positions.forEach(e => {
+        if(playerIds.has(e.id) == true) {         
+          // the player is already on the canvas
+          // update the player state
+          updatePosition(e);
+        } else {
+          //console.log("onsmg", e);
+          // We need to draw the player
+          // [{'id': 1234321, 'x': 123, 'y': 321, 'team_id': 1234321}] ,{…},{…}]
+          playerIds.add(e.id);
+          addPlayer(e);
+        }
+      });
+    }
+
   };
+};
 
-var level = 1;
-window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
-		if (key == "level") {
-		  level = +value;
-		}
-	});
-
-var w = 300, // width of map
-    h = 300, // height of map
-    sz = 20, // cell size
-    r = sz / 2, // radius for circles based on cell
-    sr = r * r, // radius^2
-    ssz = sz * sz, // cell^2
-    fogCells = 9,
-    v = 3,
-    n = level + 1,
-    t = 5000;
-
-var rows = Math.ceil(h / sz);
-var cols = Math.ceil(w / sz);
-
-var s = false;
-d3.selectAll(".switch")
-  .on("click", function(e) { s = !s; d3.selectAll(".switch").attr("value", s ? "H" : "V"); });
-d3.select("#switchOrientationButton2")
-  .style("left", (w - 20) + "px");
-d3.select("#switchOrientationButton3")
-  .style("top", (h - 20) + "px");
-d3.select("#switchOrientationButton4")
-  .style("top", (h - 20) + "px")
-  .style("left", (w - 20) + "px");
-d3.select("#nextLevelButton")
-  .style("top", Math.round(h / 2 + 20) + "px")
-  .style("left", Math.round(w / 2 - 50) + "px")
-  .on("click", function(e) { window.location.href = "?level=" + (level + 1); });
-d3.select("#playAgainButton")
-  .style("top", Math.round(h / 2 + 20) + "px")
-  .style("left", Math.round(w / 2 - 50) + "px")
-  .on("click", function(e) { window.location.href = "?level=1"; });
-
-// define the cells
-var cells = d3.range(0, rows * cols).map(function (d) {
-  var col = d % cols;
-  var row = (d - col) / cols;
-  return {
-    r: row,
-    c: col,
-    x: col * sz + r,
-    y: row * sz + r,
-    type: map[col][row]
-  };
-});
+/* ----------------------------- */
+// MAP SETUP
 
 // main svg setup
 var svg = d3.select("body").append("svg")
@@ -91,6 +120,8 @@ var svg = d3.select("body").append("svg")
 
 var rectx = function(d) { return d.x - r; };
 var recty = function(d) { return d.y - r; };
+
+/*
 
 var tailx = function(d) { return d.dx > 0 ? d.sx - r : rectx(d) - d.dx * sz; };
 var taily = function(d) { return d.dy > 0 ? d.sy - r : recty(d) - d.dy * sz; };
@@ -112,9 +143,68 @@ var topLeftCell = function(c) { return cells[Math.max(0, c.r - 1) * cols + Math.
 var bottomLeftCell = function(c) { return cells[Math.min(rows - 1, c.r + 1) * cols + Math.max(0, c.c - 1)]; };
 var bottomRightCell = function(c) { return cells[Math.min(rows - 1, c.r + 1) * cols + Math.min(cols - 1, c.c + 1)]; };
 var topRightCell = function(c) { return cells[Math.max(0, c.r - 1) * cols + Math.min(cols - 1, c.c + 1)]; };
-
+*/
 // Creating cells & walls
-var cell = svg.selectAll(".cell")
+$(document).keydown(function(e) {
+  //x_pos = parseInt(player.attr("x"));
+  //y_pos = parseInt(player.attr("y"));
+  duration = 50;
+  switch(e.which) {
+      case 37: // left
+        var d = JSON.stringify(
+          {"type":"human", "request":null, "playerid":myid,"action":"move_left"}
+        );
+        ws.send(d);
+        /*
+        player.transition()
+        .ease(d3.easeLinear)
+        .duration(duration)
+        .attr("x",x_pos-sz);
+        */
+        break;
+
+      case 38: // up
+      d = JSON.stringify(
+        {"type":"human", "request":null, "playerid":myid,"action":"move_up"}
+      );
+        ws.send(d);
+        break;
+
+      case 39: // right
+      d = JSON.stringify(
+        {"type":"human", "request":null, "playerid":myid,"action":"move_right"}
+      );
+        ws.send(d);
+        break;
+
+      case 40: // down
+      d = JSON.stringify(
+        {"type":"human", "request":null, "playerid":myid,"action":"move_down"}
+      );
+        ws.send(d);
+        break;
+
+      default: return; // exit this handler for other keys
+  }
+  e.preventDefault(); // prevent the default action (scroll / move caret)
+  //fogRemoval();
+});
+
+function createMap(map) {
+  // define the cells
+  var cells = d3.range(0, rows * cols).map(function (d) {
+  var col = d % cols;
+  var row = (d - col) / cols;
+  return {
+    r: row,
+    c: col,
+    y: col * sz + r,
+    x: row * sz + r,
+    type: map[col][row]
+  };
+  });
+
+  var cell = svg.selectAll(".cell")
   .data(cells)
   .enter().append("rect")
   .attr("class", function(d) {
@@ -133,7 +223,7 @@ var cell = svg.selectAll(".cell")
   })
   .attr("layer", "main-layer")
   .attr("grid", function(d){return d.type;})
-  .attr("cellType", function(d) { return ((d.isWall = d.c == 0 || d.c == cols - 1 || d.r == 0 || d.r == rows - 1) ? "wall" : "ground"); })
+//  .attr("cellType", function(d) { return ((d.isWall = d.c == 0 || d.c == cols - 1 || d.r == 0 || d.r == rows - 1) ? "wall" : "ground"); })
   .attr("x", rectx)
   .attr("y", recty)
   .attr("width", sz)
@@ -141,6 +231,14 @@ var cell = svg.selectAll(".cell")
   .each(function(d) {
     d.elnt = d3.select(this);
   });
+
+  mapRender = true;
+  return cell;
+}
+
+var cell = createMap();
+
+
 
   /*
 // Creating fog of war
@@ -157,6 +255,8 @@ var fog = svg.selectAll(".fog")
     d.elnt = d3.select(this);
   });
 */
+
+/*
 var cellz = svg.selectAll('.cellz')
   .data(cells)
   .enter().append("rect")
@@ -166,28 +266,46 @@ var cellz = svg.selectAll('.cellz')
   .attr("id", function(d){ return String(d.x-r)+String(d.y-r);})
   .attr("width", sz)
   .attr("height", sz)
-
+*/
 
 /* ------------------------------- */
 // THE PLAYER
 
-var playerLocs = [
-  { "x_axis": 40, "y_axis": 40, "color" : "green" },
-  { "x_axis": 80, "y_axis": 100, "color" : "purple"},
-  { "x_axis": 400, "y_axis": 200, "color" : "red"}];
+// {'id': 1234321, 'x': 123, 'y': 321, 'team_id': 1234321}
+function updatePlayers() {
 
+}
 
-var players = svg.selectAll("player")
-  .data(playerLocs)
-  .enter()
-  .append("rect")
-  .attr("transform", "translate(0,0)")
-  .attr("x", function (d) { return d.x_axis; })
-  .attr("y", function (d) { return d.y_axis; })
-  .attr("type", 'player')
-  .attr("width", 20)
-  .attr("height", 20)
-  .style("fill", function(d) { return d.color; });
+function updatePosition(e) {
+  console.log(e);
+  svg.select("#p"+e.id).transition()
+  .ease(d3.easeLinear)
+  .duration(50)
+  .attr("x",e.y*sz)
+  .attr("y", e.x*sz);
+}
+
+function addPlayer(playerLocs) {
+  console.log(playerLocs);
+  /*
+  var playerLocs = [
+    { "x_axis": 40, "y_axis": 40, "color" : "green" },
+    { "x_axis": 80, "y_axis": 100, "color" : "purple"},
+    { "x_axis": 400, "y_axis": 200, "color" : "red"}];
+  */
+  playerLocs = [playerLocs];
+  var p = svg.selectAll("players")
+    .data(playerLocs)
+    .enter()
+    .append("rect")
+    .attr("id", function(d) { return "p"+d.id; })
+    .attr("x", function (d) { return d.y * sz; })
+    .attr("y", function (d) { return d.x * sz; })
+    .attr("type", 'player')
+    .attr("width", sz)
+    .attr("height", sz)
+    .style("fill", "red");
+}
 
 
 var playerLoc = [{ "x_axis": 200, "y_axis": 100, "color" : "green" }];
@@ -202,15 +320,13 @@ var player = svg.selectAll("player")
   .attr("type", 'player')
   .attr("width", 20)
   .attr("height", 20)
-  .style("fill", function(d) { return d.color; });
+  .style("fill", "#fff");
 
 function fogRemoval() {
   var px = parseInt(player.attr("x"));
   var py = parseInt(player.attr("y"));
   
   var ii = px - ((fogCells-1)/2 * sz) - sz;
-  console.log(ii);
-  console.log(px);
   for (var i=0; i < fogCells; i++) {
     ii = ii+sz;
     var jj = py - ((fogCells-1)/2 * sz) - sz;
@@ -220,47 +336,10 @@ function fogRemoval() {
     }
   }
 }
-fogRemoval();
+//fogRemoval();
 
 // Using jQuery for keydown functions
-$(document).keydown(function(e) {
-  x_pos = parseInt(player.attr("x"));
-  y_pos = parseInt(player.attr("y"));
-  duration = 50;
-  switch(e.which) {
-      case 37: // left
-        player.transition()
-        .ease(d3.easeLinear)
-        .duration(duration)
-        .attr("x",x_pos-sz);
-        break;
 
-      case 38: // up
-        player.transition()
-        .ease(d3.easeLinear)
-        .duration(duration)
-        .attr("y",y_pos-sz);
-        break;
-
-      case 39: // right
-        player.transition()
-        .ease(d3.easeLinear)
-        .duration(duration)
-        .attr("x",x_pos+sz);
-        break;
-
-      case 40: // down
-        player.transition()
-        .ease(d3.easeLinear)
-        .duration(duration)
-        .attr("y",y_pos+sz);
-        break;
-
-      default: return; // exit this handler for other keys
-  }
-  e.preventDefault(); // prevent the default action (scroll / move caret)
-  fogRemoval();
-});
 
 /* ------------------------------- */
 // BORDER CLOSING IN
@@ -281,6 +360,8 @@ function wallsMovingIn() {
 */
 
 /* ------------------------------- */
+
+/*
 var playerz = d3.selectAll(players);
 var simulation = d3.forceSimulation(players)
   .force('charge', d3.forceManyBody().strength(5))
@@ -310,6 +391,7 @@ function ticked() {
 
   u.exit().remove();
 }
+*/
 /* ------------------------------- */
 function previewLocation(c1, p) {
   if (blue) blue.classed("blue", false);
