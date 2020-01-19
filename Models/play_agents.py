@@ -45,6 +45,20 @@ def get_state(team_name, player_idx):
 
 def send_action_to_server(team_name, player_idx, action):
 
+    d = {0: "move_up",
+        1: "move_down",
+        2: "move_left",
+        3: "move_right",
+        4: "",
+        5: "",
+        6: "",
+        7: "",
+        8: "",
+        9: ""}
+    
+    action_idx = get_action_idx(action)
+    d[action_idx]
+
     pass
 
 
