@@ -10,7 +10,7 @@ import warnings
 warnings.filterwarnings("once")
 
 def gen_teams(num_teams, num_players, death_gamma, model):
-    
+
     teams = {}
     for t in range(num_teams):
         team = []
@@ -27,6 +27,15 @@ def get_state(team_name, player_idx):
     dead: bool if this agent is dead
     game_over: None unless game over then, team ranking
     """
+    # 
+    # reply = {"grid" : game.get_9x9(player_id, grids[game.players["player_id"].team_id],
+    #                          "messages" : ["","","",""],
+    #                          "dead" : not game.players["player_id"].alive,
+    #                          "over" : game.winner,
+    #                         }
+
+
+
     big = np.genfromtxt("map_1010_filled.txt", delimiter=" ", dtype=np.int32)
     fov_9by9 = big[-9:,-9:]    ## need to get this from server
     messages = ['','','','']   ## need to get this from server
@@ -97,8 +106,8 @@ def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gamma=0.9
         count += 1
         if count == 40:
             game_over = True
-    assert not game_loop_update_state(teams)    
-    
+    assert not game_loop_update_state(teams)
+
     combined_histories = []
     for team_name in teams:
         for player_idx, p_env in enumerate(teams[team_name]):
@@ -108,8 +117,8 @@ def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gamma=0.9
     model.memory = model.memory + merged
     for e in range(epochs):
         model.replay(batch_size)
-        
+
     return model
-        
+
 
 run_game(1, 2)
