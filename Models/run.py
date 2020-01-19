@@ -2,8 +2,11 @@
 from pomdp_env import MultiAgentEnv
 from agent_no_text import DRQNAgent
 import numpy as np
+import itertools
+from collections import deque
 
 def gen_teams(num_teams, num_players, death_gamma, model):
+    
     teams = {}
     for t in range(num_teams):
         team = []
@@ -62,12 +65,12 @@ def game_loop_update_state(teams):
             output = p_env.step(p_env.action, state, dead, game_over)
             old_state = state
             state, action, reward, done = output
-            p_env.model.remember(old_state, action, reward, state, done)
+            p_env.add_to_history(old_state, action, reward, state, done)
             if not done:
                 game_over = False
     return game_over
 
-def run_game(batch_size, num_teams = 3, num_players = 2, death_gamma=0.9999):
+def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gamma=0.9999):
     game_over = False
 
     model = DRQNAgent(batch_size)
@@ -82,13 +85,21 @@ def run_game(batch_size, num_teams = 3, num_players = 2, death_gamma=0.9999):
     while not game_over:
         game_loop_send_actions(teams)
         game_over = game_loop_update_state(teams)
+        game_over = True
     assert not game_loop_update_state(teams)    
-        
-
+    
+    combined_histories = []
+    for team_name in teams:
+        for player_idx, p_env in enumerate(teams[team_name]):
+            combined_histories.append(list(p_env.history))
     
     ## do one training loop
+    merged = deque(list(itertools.chain.from_iterable(combined_histories)))
+    model.memory = model.memory + merged
 
-    ## or return list sampled states experienced from each agent.
+    for e in range(epochs):
+        model.replay(batch_size)
+    return model
         
 
-run_game(4)
+run_game(4, 2)

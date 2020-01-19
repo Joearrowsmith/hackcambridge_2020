@@ -27,9 +27,10 @@ intermediate rewards:
   
 import gym
 import numpy as np
+from collections import deque
 
 class MultiAgentEnv(gym.Env):
-    def __init__(self, death_gamma, model, bot_type=None):
+    def __init__(self, death_gamma, model, histlen=100, bot_type=None):
         self.model = model
         self.bot_type = bot_type
         self.fov = (9,9)
@@ -37,12 +38,16 @@ class MultiAgentEnv(gym.Env):
         self.observation_space = gym.spaces.Box(low=-2, high=4, shape=self.fov, dtype=np.int32)
         ##char_max = 4  
         ##self.observation_text = gym.spaces.Box(low=0, high=char_max, shape=8, dtype=np.int32)
+        self.history = deque(maxlen=histlen)
         self.death_gamma = death_gamma
         self.death = None # {obs_state, reward, step_number}
         self.step_num = 0
 
         self.state = None
         self.action = None
+
+    def add_to_history(self, state, action, reward, next_state, done):
+        self.history.append((state, action, reward, next_state, done))
 
     def calculate_reward(self, die=False, team_die=False, 
                          bot_type=None):
