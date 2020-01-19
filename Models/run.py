@@ -40,16 +40,22 @@ def run_game(batch_size, num_teams = 3, num_players = 2, death_gamma=0.9999):
     model = DRQNAgent(batch_size)
     teams = gen_teams(num_teams, num_players, death_gamma, model)    
 
+    no_action = get_action(0)
     ## get initial game state
     for team_name in teams:
-        for player_idx, p in enumerate(teams[team_name]):
-            state, dead, game_over = get_state(team_name, player_idx, )
-            
-
+        for player_idx, p_env in enumerate(teams[team_name]):
+            state, dead, game_over = get_state(team_name, player_idx, no_action)
+            p_env.state = state
 
     while not game_over:
 
-        ## send game state and request intention of moves from agents
+        actions = []
+
+        for team_name in teams:
+            for player_idx, p_env in enumerate(teams[team_name]):
+                model.act(p_env.state)
+
+        ## request intention of moves from agents
 
         ## execute the moves (send to server) and calculate the score and get new game state
 

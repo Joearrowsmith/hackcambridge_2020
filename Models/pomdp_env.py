@@ -29,8 +29,7 @@ import gym
 import numpy as np
 
 class MultiAgentEnv(gym.Env):
-    def __init__(self, death_gamma, model, bot_type=None):
-        self.model = model
+    def __init__(self, death_gamma, bot_type=None):
         self.bot_type = bot_type
         self.fov = (9,9)
         self.action_space = gym.spaces.Discrete(10)
@@ -40,6 +39,7 @@ class MultiAgentEnv(gym.Env):
         self.death_gamma = death_gamma
         self.death = None # {obs_state, reward, step_number}
         self.step_num = 0
+        self.state = None
 
     def calculate_reward(self, die=False, team_die=False, 
                          bot_type=None):
