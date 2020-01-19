@@ -99,7 +99,7 @@ def game_loop_update_state(teams):
     return game_over
 
 
-def run_game(load_file, num_teams = 3, num_players = 2, death_gamma=0.9999):
+def run_game(load_file, batch_size, num_teams = 3, num_players = 2, death_gamma=0.9999):
     game_over = False
 
     model = DRQNAgent(batch_size)
@@ -111,7 +111,7 @@ def run_game(load_file, num_teams = 3, num_players = 2, death_gamma=0.9999):
     ## get initial game state
     for team_name in teams:
         for player_idx, p_env in enumerate(teams[team_name]):
-            state, dead, game_over = get_state(team_name, player_idx, no_action)
+            state, dead, game_over = get_state(team_name, player_idx)
             p_env.state = state
 
     count = 0
@@ -133,4 +133,4 @@ def run_game(load_file, num_teams = 3, num_players = 2, death_gamma=0.9999):
     return model
 
 
-run_game(1, 2)
+run_game("save_model.h5", 1, 1, 2)

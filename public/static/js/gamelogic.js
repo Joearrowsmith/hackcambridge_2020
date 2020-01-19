@@ -77,8 +77,6 @@ ws.onopen = function() {
   );
   ws.send(innit);
 
-  // TO DO: UPDATE THE MAP -- create a functions
-
   ws.onmessage = function(event) {
     var dataJSON = JSON.parse(event.data);
     console.log(dataJSON);
@@ -89,6 +87,10 @@ ws.onopen = function() {
       //updateDimensions(dataJSON.response_data);
       updateMap(dataJSON.response_data);
       createMap(dataJSON.response_data);
+    } else if(dataJSON.response == "status") {
+      if(dataJSON.response_data == "death"){
+        overlayText("Game Over.");
+      }
     }
 
     if(mapRender == true) {
@@ -338,12 +340,23 @@ function fogRemoval() {
 }
 //fogRemoval();
 
-// Using jQuery for keydown functions
 
+function overlayText(text) {
+  svg.append("text")
+        .attr("x", w / 2 - textWidth / 2)
+        .attr("y", h / 2)
+        .attr("class", "bigTextStroke")
+        .text(text);
+  svg.append("text")
+    .attr("x", w / 2 - textWidth / 2)
+    .attr("y", h / 2)
+    .attr("class", "bigText")
+    .text(text);
+}
 
 /* ------------------------------- */
 // BORDER CLOSING IN
-/*
+
 var wallThickness = 1;
 setInterval(wallsMovingIn, 10000);
 
@@ -357,7 +370,7 @@ function wallsMovingIn() {
   });
   wallThickness++;
 }
-*/
+
 
 /* ------------------------------- */
 
