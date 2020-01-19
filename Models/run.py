@@ -3,7 +3,6 @@ from pomdp_env import MultiAgentEnv
 from agent_no_text import DRQNAgent
 import numpy as np
 
-
 def gen_teams(num_teams, num_players, death_gamma, model):
     teams = {}
     for t in range(num_teams):
