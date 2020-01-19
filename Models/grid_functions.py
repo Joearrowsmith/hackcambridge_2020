@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 def encode_grid_onehot(grid, num_categories=7):
     """Encodes Grid using One Hot convention."""
     window_size = grid.shape[0]
-    distinct_categories = np.tile(np.arange(7), window_size).reshape(window_size, num_categories)
+    distinct_categories = np.tile(np.arange(num_categories), window_size).reshape(window_size, num_categories)
     enc = sklearn.preprocessing.OneHotEncoder(
                 categories=distinct_categories,
                 sparse=False,
