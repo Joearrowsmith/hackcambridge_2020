@@ -29,6 +29,7 @@ def gen_teams(num_teams, num_players, death_gamma, model):
     return teams
 
 
+
 async def get_state(team_name, player_idx):
     """
     obs_state: [9x9 np.array, 4x20 character message array]
@@ -51,13 +52,13 @@ async def get_state(team_name, player_idx):
     #return [main_state['grid'], main_state['messages']], main_state['dead'], main_state['over']
     return [fov_9by9, messages], dead, game_over
 
+
 async def send_action_to_server(team_name, player_idx, action):
     d = {0: "move_up", 1: "move_down", 2: "move_left", 3: "move_right", 4: "", 5: "", 6: "", 7: "", 8: "", 9: ""}
     action_idx = get_action_idx(action)
     print(action_idx)
     data = json.dumps({"type": "AI", "playerid": player_idx, "team_name": team_name, "action": d[action_idx]})
     await sockets[player_idx].send(data)
-
 
 def get_action(action_idx):
     action = np.zeros(shape=(10))
@@ -96,7 +97,7 @@ async def game_loop_update_state(teams):
     return game_over
 
 
-async def run_game(websocket, batch_size, epochs, num_teams = 2, num_players = 2, death_gamma=0.9999):
+async def run_game(websocket, save_name, batch_size, epochs, num_teams = 2, num_players = 2, death_gamma=0.9999):
     game_over = False
 
     model = DRQNAgent(batch_size)
@@ -128,12 +129,13 @@ async def run_game(websocket, batch_size, epochs, num_teams = 2, num_players = 2
     model.memory = model.memory + merged
     for e in range(epochs):
         model.replay(batch_size)
-
+    model.save(save_name)
     return model
 
 async def main():
     uri = "ws://localhost:5678"
     async with websockets.connect(uri) as websocket:
+<<<<<<< HEAD
         
 
         data = json.dumps({"type":"AI", "request":"map", "playerid":"","action":None})
@@ -147,11 +149,14 @@ async def main():
             main_state = json.loads(rec)
             print('--------------------------------')
             print(main_state)
+=======
+        main_state = await websocket.recv()
+        main_state = json.loads(main_state)
+>>>>>>> 0447612d2fea384fe7fc211a0fe16ae6cb44a191
 
         await run_game(websocket, 1, 2)
         #print(websocket.recv())
 
 asyncio.get_event_loop().run_until_complete(main())
 asyncio.get_event_loop().run_forever()
-
 
