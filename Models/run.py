@@ -11,10 +11,12 @@ def gen_teams(num_teams, num_players, death_gamma, model):
             team.append(agent_env)
         teams[f'ai_team_{t}'] = team
 
+
 def get_state(team_name, player_idx):
     fov_9by9 = ## need to get this from server
     messages = ['','','','']
     return [fov_9by9, messages]
+
 
 def run_game(num_teams = 3, num_players = 2):
     game_over = False
@@ -23,8 +25,10 @@ def run_game(num_teams = 3, num_players = 2):
     teams = gen_teams(num_teams, num_players, model)    
 
     ## get initial game state
-
-    
+    for team_name in teams:
+        for player_idx, p in enumerate(teams[team_name]):
+            p.get
+            
 
 
     while not game_over:

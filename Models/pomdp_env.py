@@ -41,8 +41,6 @@ class MultiAgentEnv(gym.Env):
         self.death = None # {obs_state, reward, step_number}
         self.step_num = 0
 
-        self.get_init_board_state()
-
     def calculate_reward(self, die=False, team_die=False, 
                          bot_type=None):
         current_reward = 0
@@ -84,24 +82,8 @@ class MultiAgentEnv(gym.Env):
         assert current_reward <= 15
         return current_reward  
 
-    def get_next_obs_state(self, action):
-        raise NotImplementedError
-        """
-        obs_state: [7x7 np.array, 4x20 character message array]
-        dead: bool if this agent is dead
-        game_over: None unless game over then, team ranking
-        """
-        return obs_state, dead, game_over
-
-
-    def step(self, action):
+    def step(self, action, obs_state, dead, game_over):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
-        obs_state, dead, game_over = get_next_obs_state(action)
-        """
-        obs_state: [7x7 np.array, 4x20 character message array]
-        dead: bool if this agent is dead
-        game_over: None unless game over then, team ranking
-        """
         output = None
         reward = None
         if self.death:
@@ -114,10 +96,11 @@ class MultiAgentEnv(gym.Env):
                 self.death['step_num'] = self.step_num
                 self.death['obs_state'] = obs_state
                 self.death['reward'] = reward
+                self.death['action'] = action
                 output = None
             else:
                 ## not dead
-                output = obs_state, reward, done
+                output = obs_state, action, reward, done
 
         if output None:
             assert dead, "for a non output player must be dead"
@@ -129,7 +112,7 @@ class MultiAgentEnv(gym.Env):
                 final_reward = self.death['reward'] + team_reward * self.death_gamma**(self.step_num - self.death['step_num'] ## this will reduce the reward, a longer time results in less reward.
             else:
                 final_reward = team_reward
-            return self.death['obs_state'], final_reward, True
+            return self.death['obs_state'], self.death['action'], final_reward, True
         self.step_num += 1
         return output
 
