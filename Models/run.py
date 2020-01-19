@@ -82,10 +82,13 @@ def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gamma=0.9
             state, dead, game_over = get_state(team_name, player_idx)
             p_env.state = state
 
+    count = 0
     while not game_over:
         game_loop_send_actions(teams)
         game_over = game_loop_update_state(teams)
-        game_over = True
+        count += 1
+        if count == 40:
+            game_over = True
     assert not game_loop_update_state(teams)    
     
     combined_histories = []
@@ -97,9 +100,13 @@ def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gamma=0.9
     merged = deque(list(itertools.chain.from_iterable(combined_histories)))
     model.memory = model.memory + merged
 
+
+    print(model.memory)
+
     for e in range(epochs):
         model.replay(batch_size)
+        
     return model
         
 
-run_game(4, 2)
+run_game(1, 2)

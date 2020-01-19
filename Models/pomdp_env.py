@@ -62,9 +62,9 @@ class MultiAgentEnv(gym.Env):
 
     def add_to_history(self, state, action, reward, next_state, done):
         ## convert state to onehot
-        one_hot_next_state = encode_grid_onehot(next_state)
+        one_hot_next_state = encode_grid_onehot(next_state[0])
         time_state = list(self.time_history)
-        self.time_history.append(one_hot_next_state)
+        self.time_history.append([one_hot_next_state, next_state[1]])
         next_time_state = list(self.time_history)
         if len(self.time_history) == self.time_history.maxlen: 
             self.history.append((self.time_history[-2], action, reward, next_state, done))
