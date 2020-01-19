@@ -28,6 +28,7 @@ def gen_teams(num_teams, num_players, death_gamma, model):
     return teams
 
 
+
 async def get_state(team_name, player_idx):
     """
     obs_state: [9x9 np.array, 4x20 character message array]
@@ -51,13 +52,13 @@ async def get_state(team_name, player_idx):
 
     return [fov_9by9, messages], dead, game_over
 
+
 async def send_action_to_server(team_name, player_idx, action):
     d = {0: "move_up", 1: "move_down", 2: "move_left", 3: "move_right", 4: "", 5: "", 6: "", 7: "", 8: "", 9: ""}
     action_idx = get_action_idx(action)
     print(action_idx)
     data = json.dumps({"type": "AI", "playerid": player_idx, "team_name": team_name, "action": d[action_idx]})
     await sockets[player_idx].send(data)
-
 
 def get_action(action_idx):
     action = np.zeros(shape=(10))
@@ -139,5 +140,4 @@ async def main():
 
 asyncio.get_event_loop().run_until_complete(main())
 asyncio.get_event_loop().run_forever()
-
 

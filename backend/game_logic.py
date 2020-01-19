@@ -156,6 +156,7 @@ class Game:
     def generate_map(self):
         return np.loadtxt("map_4060.txt")
 
+
     def run_die(self, pid):
         pid.alive = False
         self.team_alive[pid.team_id] -= 1

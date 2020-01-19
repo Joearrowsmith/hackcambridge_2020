@@ -340,6 +340,7 @@ function fogRemoval() {
 }
 //fogRemoval();
 
+
 function overlayText(text) {
   svg.append("text")
         .attr("x", w / 2 - textWidth / 2)
