@@ -134,7 +134,7 @@ async def run_game(websocket, batch_size, epochs, num_teams = 2, num_players = 2
 async def main():
     uri = "ws://localhost:5678"
     async with websockets.connect(uri) as websocket:
-        await run_game(websocket, 1, 2)
+        await run_game(websocket, 2, 2)
         #print(websocket.recv())
 
 asyncio.get_event_loop().run_until_complete(main())
