@@ -92,26 +92,6 @@ def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gamma=0.9
 
     count = 0
     while not game_over:
-<<<<<<< HEAD
-
-        for team_name in teams:
-            for player_idx, p_env in enumerate(teams[team_name]):
-                ## request intention of moves from agents
-                action = p_env.act(p_env.state)
-                p_env.action = action
-
-                ## send move to send:
-
-
-
-        ## execute the moves (send to server) and calculate the score and get new game state
-
-        # save the game state from training
-
-        ## check if game is over
-        break
-
-=======
         game_loop_send_actions(teams)
         game_over = game_loop_update_state(teams)
         count += 1
@@ -123,18 +103,9 @@ def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gamma=0.9
     for team_name in teams:
         for player_idx, p_env in enumerate(teams[team_name]):
             combined_histories.append(list(p_env.history))
-    
->>>>>>> 1ba67fbd8b6916246ad2c182a0186642ce0da2aa
     ## do one training loop
     merged = deque(list(itertools.chain.from_iterable(combined_histories)))
     model.memory = model.memory + merged
-
-<<<<<<< HEAD
-    ## or return list sampled states experienced from each agent.
-
-
-run_game(4)
-=======
     for e in range(epochs):
         model.replay(batch_size)
         
@@ -142,4 +113,3 @@ run_game(4)
         
 
 run_game(1, 2)
->>>>>>> 1ba67fbd8b6916246ad2c182a0186642ce0da2aa
