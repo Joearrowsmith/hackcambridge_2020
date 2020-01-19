@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def create_empty_grid(N, window_size):
+def create_empty_grid(M, N, window_size):
     border_id = window_size//2 - 1
-    grid = - np.ones((N + 2*border_id, N + 2*border_id), dtype=np.int32)
+    grid = - np.ones((M + 2*border_id, N + 2*border_id), dtype=np.int32)
 
     # Filling borders:
     grid[border_id:-border_id, border_id] = -2
@@ -14,15 +14,18 @@ def create_empty_grid(N, window_size):
     return grid
 
 
-def plot_random_paths(N, window_size, grid, n_walks):
+def plot_random_paths(M, N, window_size, grid, n_walks):
     border_id = window_size//2 - 1
     map_inner = grid[border_id+1:-border_id-1, border_id+1:-border_id-1].copy()
-    sub_coords1 = (N//2) * np.ones((n_walks), dtype=np.int32)
-    sub_coords2 = (N//2 + 1) * np.ones((n_walks), dtype=np.int32)
-    coords1 = np.array([sub_coords1, sub_coords1]).T
-    coords2 = np.array([sub_coords2, sub_coords2]).T
-    coords3 = np.array([sub_coords1, sub_coords2]).T
-    coords4 = np.array([sub_coords2, sub_coords1]).T
+    sub_coords1 = (M//2) * np.ones((n_walks), dtype=np.int32)
+    sub_coords2 = (M//2 + 1) * np.ones((n_walks), dtype=np.int32)
+    sub_coords3 = (N//2) * np.ones((n_walks), dtype=np.int32)
+    sub_coords4 = (N//2 + 1) * np.ones((n_walks), dtype=np.int32)
+
+    coords1 = np.array([sub_coords1, sub_coords3]).T
+    coords2 = np.array([sub_coords2, sub_coords4]).T
+    coords3 = np.array([sub_coords1, sub_coords4]).T
+    coords4 = np.array([sub_coords2, sub_coords3]).T
     possible_moves = np.array([[0, 1], [0, -1], [1, 0], [-1, 0]])
     # Getting initial positions:
     grid[coords1[:, 0], coords1[:, 1]] = np.zeros(n_walks, dtype=np.int32)
@@ -38,10 +41,14 @@ def plot_random_paths(N, window_size, grid, n_walks):
         coords4 += moves_turn
         neg_bool = ((coords1 < 0).sum() + (coords2 < 0).sum()
                     + (coords3 < 0).sum() + (coords4 < 0).sum())
-        over_bool = ((coords1 >= N-2).sum() + (coords2 >= N-2).sum()
-                    + (coords3 >= N-2).sum() + (coords4 >= N-2).sum())
+        over_bool = ((coords1[:, 0] >= M-2).sum() + (coords2[:, 0] >= M-2).sum()
+                    + (coords3[:, 0] >= M-2).sum() + (coords4[:, 0] >= M-2).sum()
+                    + (coords1[:, 1] >= N-2).sum() + (coords2[:, 1] >= N-2).sum()
+                    + (coords3[:, 1] >= N-2).sum() + (coords4[:, 1] >= N-2).sum())
+
         if neg_bool or over_bool:
             break
+
         map_inner[coords1[:, 0], coords1[:, 1]] = np.zeros(n_walks, dtype=np.int32)
         map_inner[coords2[:, 0], coords2[:, 1]] = np.zeros(n_walks, dtype=np.int32)
         map_inner[coords3[:, 0], coords3[:, 1]] = np.zeros(n_walks, dtype=np.int32)
@@ -50,9 +57,10 @@ def plot_random_paths(N, window_size, grid, n_walks):
     return grid
 
 
-def generate_random_map(size=100, window_size=9):
-    grid = create_empty_grid(size, window_size)
-    map_game = plot_random_paths(size, window_size, grid, 10)
+def generate_random_map(size=(40, 60), window_size=9):
+    M, N = size
+    grid = create_empty_grid(M, N, window_size)
+    map_game = plot_random_paths(M, N, window_size, grid, 10)
     return map_game
 
 
@@ -62,17 +70,17 @@ def create_players(map_game_master, n_teams, n_players_per_team):
     map_game = map_game_master.copy()
 
     # Divide board into n_teams equal pieces:
-    N = map_game.shape[0]
+    M, N = map_game.shape
 
     # Define all the x and y coordinates
+    x_coords = np.tile(np.arange(M), M).reshape(M, M).T
     y_coords = np.tile(np.arange(N), N).reshape(N, N)
-    x_coords = y_coords.copy().T
 
     if n_teams == 2:
         teams_dict = {1: [], 2: []}
         # Divide grid in to two:
-        x_coords1 = np.arange(N//2+1)
-        x_coords2 = np.arange(N//2+1, N)
+        x_coords1 = np.arange(M//2+1)
+        x_coords2 = np.arange(M//2+1, M)
 
         i1 = n_players_per_team
         i2 = n_players_per_team
@@ -94,8 +102,8 @@ def create_players(map_game_master, n_teams, n_players_per_team):
     elif n_teams == 3:
         teams_dict = {1: [], 2: [], 3: []}
         # Divide grid in to two:
-        x_coords1 = np.arange(N//2+1)
-        x_coords2 = np.arange(N//2+1, N)
+        x_coords1 = np.arange(M//2+1)
+        x_coords2 = np.arange(M//2+1, M)
         y_coords1 = np.arange(N//2+1)
         y_coords2 = np.arange(N//2+1, N)
 
@@ -127,8 +135,8 @@ def create_players(map_game_master, n_teams, n_players_per_team):
     elif n_teams == 4:
         teams_dict = {1: [], 2: [], 3: [], 4: []}
         # Divide grid in to two:
-        x_coords1 = np.arange(N//2+1)
-        x_coords2 = np.arange(N//2+1, N)
+        x_coords1 = np.arange(M//2+1)
+        x_coords2 = np.arange(M//2+1, M)
         y_coords1 = np.arange(N//2+1)
         y_coords2 = np.arange(N//2+1, N)
 
@@ -168,9 +176,8 @@ def create_players(map_game_master, n_teams, n_players_per_team):
 
 
 def map_shrink(map_game):
-    N = map_game.shape[0]
+    M, N = map_game.shape
     boundary_index = np.where(map_game == -2)[0][0]
-    boundary_index
 
     b1 = boundary_index + 1
     b2 = - (b1 + 1)
@@ -187,14 +194,13 @@ def map_shrink(map_game):
     return map_game
 
 
-
 if __name__ == "__main__":
-    map_game = generate_random_map(size=100)
+    map_game = generate_random_map(size=(40, 60))
     figure = plt.figure(figsize=(10, 10))
     plt.imshow(map_game, cmap='gray')
     plt.show()
 
-    for i in range(10):
+    for i in range(28):
         map_game = map_shrink(map_game)
         figure = plt.figure(figsize=(10, 10))
         plt.imshow(map_game, cmap='gray')
