@@ -4,19 +4,20 @@ import random, string, json
 
 connections = {}
 
-
 async def main(game, websocket, path):
     # a unique id for the connection
     ws_id = id(websocket)
-    if game.state == 0 and ws_id not in connections:
+    if game.state in (-1, 0) and ws_id not in connections:
         uID = str(uuid.uuid4())
-        game.add_human_player(ws_id) 
         connections[ws_id] = {
             'sock' : websocket,
             'uID' : uID,
             'message' : {},
-            'human' : None
+            'human' : None,
+            'team' : game.teamcount,
         }
+        #hacky af
+        game.teamcount += 1
 
     # Unique ID for the game
     uIDJson = json.dumps({'type': 'uID', 'uID': ws_id})
@@ -76,9 +77,15 @@ def clear_queue():
     
 async def game_tick(game):
     while True:
-        if game.state == 0:
+        if game.state == -1:
+            if len(connections) >= 2:
+                game.state = 0
+            print("state -1")
+            await asyncio.sleep(1)
+        elif game.state == 0:
+            print("state 0")
             if game.start_countdown == 0:
-                game.setup(connections)
+                await game.setup(connections)
                 game.state = 1
             else:
                 game.start_countdown -= 1
