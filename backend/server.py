@@ -80,6 +80,7 @@ async def game_tick(game):
         if game.state == -1:
             if len(connections) >= 2:
                 game.state = 0
+
             print("state -1")
             await asyncio.sleep(1)
         elif game.state == 0:
@@ -98,7 +99,7 @@ async def game_tick(game):
                 if "playerid" in mess:
                     responses[player_id] = game.handle_message(player_id, mess)
                 else:
-                    responses[player_id] = (None, None)
+                    responses[player_id] = [None, None]
 
                 vals["message"] = {}
 
@@ -106,6 +107,16 @@ async def game_tick(game):
             player_positions = game.get_positions()
 
             for player_id, resp in responses.items():
+                kill = None
+                if not game.players[player_id].alive:
+                    resp[0] = "status"
+                    resp[1] = "death"
+                    kill = player_id
+
+                if game.players[player_id].winner:
+                    resp[0] = "status"
+                    resp[1] = "winner"
+
                 reply = {"response" : resp[0],
                          "response_data" : resp[1],
                          "update" : None,
@@ -117,6 +128,9 @@ async def game_tick(game):
                     await connections[player_id]["sock"].send(json.dumps(reply))
                 except websockets.exceptions.ConnectionClosedOK:
                     pass
+
+                if kill != None:
+                    del connections[kill]
 
             await asyncio.sleep(0.05)
 
