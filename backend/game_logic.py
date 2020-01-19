@@ -126,7 +126,7 @@ class Game:
         med_val = None
         min_val = None
 
-        vals = self.team_alive.values()        
+        vals = list(self.team_alive.values())
         vals.remove(self.team_alive[team_id])
 
         max_val = max(vals)

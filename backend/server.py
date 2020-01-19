@@ -78,7 +78,7 @@ def clear_queue():
 async def game_tick(game):
     while True:
         if game.state == -1:
-            if len(connections) >= 2:
+            if len(connections) >= 1:
                 game.state = 0
 
             print("state -1")
@@ -105,7 +105,7 @@ async def game_tick(game):
 
             #update = game.get_update()
             player_positions = game.get_positions()
-            #grids = game.generate_all_grids()
+            grids = game.generate_all_grids()
 
             for player_id, resp in responses.items():
                 kill = None
