@@ -30,7 +30,7 @@ import numpy as np
 from collections import deque
 
 class MultiAgentEnv(gym.Env):
-    def __init__(self, death_gamma, model, histlen=100, bot_type=None):
+    def __init__(self, death_gamma, model, histlen=100, lstm_time_input=25, bot_type=None):
         self.model = model
         self.bot_type = bot_type
         self.fov = (9,9)
@@ -39,6 +39,7 @@ class MultiAgentEnv(gym.Env):
         ##char_max = 4  
         ##self.observation_text = gym.spaces.Box(low=0, high=char_max, shape=8, dtype=np.int32)
         self.history = deque(maxlen=histlen)
+        self.time_history = deque(maxlen=lstm_time_input)
         self.death_gamma = death_gamma
         self.death = None # {obs_state, reward, step_number}
         self.step_num = 0
@@ -47,7 +48,13 @@ class MultiAgentEnv(gym.Env):
         self.action = None
 
     def add_to_history(self, state, action, reward, next_state, done):
-        self.history.append((state, action, reward, next_state, done))
+        ## convert state to onehot
+        
+        time_state = list(self.time_history)
+        self.time_history.append(next_state)
+        next_time_state = list(self.time_history)
+        if len(self.time_history) == self.time_history.maxlen: 
+            self.history.append((state, action, reward, next_state, done))
 
     def calculate_reward(self, die=False, team_die=False, 
                          bot_type=None):

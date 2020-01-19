@@ -99,6 +99,7 @@ class DRQNAgent:
         minibatch = random.sample(self.memory, batch_size)
         for state, action, reward, next_state, done in minibatch:
             grid_state, message_state = state
+            print(grid_state.shape)
             target = self.model.predict(grid_state)
             if done:
                 target[0][action] = reward

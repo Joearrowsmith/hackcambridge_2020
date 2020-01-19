@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+
 def create_empty_grid(N, window_size):
     border_id = window_size//2 - 1
     grid = - np.ones((N + 2*border_id, N + 2*border_id), dtype=np.int32)
