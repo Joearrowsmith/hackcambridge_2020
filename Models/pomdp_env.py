@@ -25,7 +25,7 @@ intermediate rewards:
     - being attacked: -1
 """
   
-from gym import Env
+import gym
 import numpy as np
 
 class MultiAgentEnv(gym.Env):
@@ -102,14 +102,14 @@ class MultiAgentEnv(gym.Env):
                 ## not dead
                 output = obs_state, action, reward, done
 
-        if output None:
+        if output is None:
             assert dead, "for a non output player must be dead"
 
         if game_over:
             ## need to get final reward from team
             team_reward = self.get_team_reward(game_over=game_over)
             if self.death:
-                final_reward = self.death['reward'] + team_reward * self.death_gamma**(self.step_num - self.death['step_num'] ## this will reduce the reward, a longer time results in less reward.
+                final_reward = (self.death['reward'] + team_reward * self.death_gamma**(self.step_num - self.death['step_num'])) ## this will reduce the reward, a longer time results in less reward.
             else:
                 final_reward = team_reward
             return self.death['obs_state'], self.death['action'], final_reward, True

@@ -7,7 +7,7 @@ def gen_teams(num_teams, num_players, death_gamma, model):
     teams = {}
     for t in range(num_teams):
         team = []
-        for p in range(num_players)
+        for p in range(num_players):
             agent_env = MultiAgentEnv(death_gamma, model)
             team.append(agent_env)
         teams[f'ai_team_{t}'] = team
@@ -29,6 +29,12 @@ def get_state(team_name, player_idx, action):
     return [fov_9by9, messages], dead, game_over
 
 
+def get_action(action_idx):
+    action = np.zeros(shape=(10))
+    action[action_idx] = 1
+    return action
+
+
 def run_game(num_teams = 3, num_players = 2):
     game_over = False
 
@@ -38,7 +44,7 @@ def run_game(num_teams = 3, num_players = 2):
     ## get initial game state
     for team_name in teams:
         for player_idx, p in enumerate(teams[team_name]):
-            p.get_state
+            state, dead, game_over = get_state(team_name, player_idx, )
             
 
 

@@ -3,10 +3,11 @@ import gym
 import numpy as np
 import os.path
 from collections import deque
-from tf.keras.optimizers import Adam
-from tf.keras import backend as K
-
 import tensorflow as tf
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras import backend as K
+
+
 
 
 class DRQNAgent:
