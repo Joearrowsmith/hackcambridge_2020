@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-
 
 def create_empty_grid(M, N, window_size):
     border_id = window_size//2 - 1
@@ -193,15 +191,15 @@ def map_shrink(map_game):
     map_game[b2+1, :] = -1  # BOTTOM
     return map_game
 
-
-if __name__ == "__main__":
-    map_game = generate_random_map(size=(40, 60))
-    figure = plt.figure(figsize=(10, 10))
-    plt.imshow(map_game, cmap='gray')
-    plt.show()
-
-    for i in range(19):
-        map_game = map_shrink(map_game)
-        figure = plt.figure(figsize=(10, 10))
-        plt.imshow(map_game, cmap='gray')
-        plt.show()
+# 
+# if __name__ == "__main__":
+#     map_game = generate_random_map(size=(40, 60))
+#     figure = plt.figure(figsize=(10, 10))
+#     plt.imshow(map_game, cmap='gray')
+#     plt.show()
+#
+#     for i in range(19):
+#         map_game = map_shrink(map_game)
+#         figure = plt.figure(figsize=(10, 10))
+#         plt.imshow(map_game, cmap='gray')
+#         plt.show()
