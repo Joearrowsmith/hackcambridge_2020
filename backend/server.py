@@ -13,7 +13,7 @@ async def main(game, websocket, path):
         connections[ws_id] = {
             'sock' : websocket,
             'uID' : uID,
-            'message' : "",
+            'message' : {},
         }
 
 
@@ -28,7 +28,11 @@ async def main(game, websocket, path):
     try:
         async for message in websocket:
             print(f"New action: {message}")
-            connections[ws_id]["message"] = message
+            if validate_message(message):
+                print("valid message")
+                connections[ws_id]["message"] = json.loads(message)
+            else:
+                print("invalid message")
 
             '''
             can do a json data type with a type field
@@ -45,11 +49,27 @@ async def main(game, websocket, path):
 #            await vals["sock"].send(vals["uID"])
 #        await asyncio.sleep(3)
 
+
+def validate_message(message):
+    try:
+        mess = json.loads(message)
+    except json.decoder.JSONDecodeError as e:
+        return False
+
+    if "playerid" in mess:
+        return True
+    else:
+        return False
+    
 async def game_tick(game):
     while True:
         responses = {}
         for player_id, vals in connections.items():
-            responses[player_id] = game.handle_message(player_id, vals["message"])
+            mess = vals["message"]
+            if "playerid" in mess:
+                responses[player_id] = game.handle_message(player_id, mess)
+
+            vals["message"] = {}
 
         #update = game.get_update()
         player_positions = game.get_positions()
@@ -57,11 +77,12 @@ async def game_tick(game):
         for player_id, resp in responses.items():
             reply = {"response" : resp[0],
                      "response_data" : resp[1],
-                     "update" : None
+                     "update" : None,
                      "positions" : player_positions
                      }
 
-            connections[player_id]["sock"].send(reply)
+            print(reply)
+            await connections[player_id]["sock"].send(json.dumps(reply))
 
         await asyncio.sleep(0.05)
 

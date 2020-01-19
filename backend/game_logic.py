@@ -23,7 +23,7 @@ class Game:
                 "move_right" : self.move_player_right,
                 "move_up"    : self.move_player_up,
                 "move_down"  : self.move_player_down,
-                "message"    : self.handle_message,
+                "message"    : self.player_message,
                 "push_left"  : self.push_player_left,
                 "push_right" : self.push_player_right,
                 "push_up"    : self.push_player_up,
@@ -36,7 +36,7 @@ class Game:
         self.players[id_val] = Player(id_val, 5, 5, id_val)
 
     def handle_message(self, id_val, message):
-        message = json.loads(message)
+        print("message :", message)
         request_resp = (None, None)
         if message["request"] != None:
             request_resp = self.handle_request(id_val, message["request"])
@@ -48,12 +48,12 @@ class Game:
         if request == "map":
             return "map", self.board
             
-    def handle_action(id_val, action):
+    def handle_action(self, id_val, action):
         self.actions[action](self.players[id_val])
 
     def get_positions(self):
         deets = []
-        for ids, p in self.players:
+        for ids, p in self.players.items():
             deets.append({"id":p.uid,"x":p.x,"y":p.y,"team_id":p.team_id})
         return deets
 
@@ -71,21 +71,21 @@ class Game:
 
     def move_player_left(self, player):
         print("Moving left")
-        p.y -= 1
+        player.y -= 1
 
     def move_player_right(self, player):
         print("Moving right")
-        p.y += 1
+        player.y += 1
 
     def move_player_up(self, player):
         print("Moving up")
-        p.x -= 1
+        player.x -= 1
 
     def move_player_down(self, player):
         print("Moving down")
-        p.x += 1
+        player.x += 1
 
-    def handle_message(self, player, message):
+    def player_message(self, player, message):
         print(f"Message: {message}")
 
     def push_player_left(self, player):
