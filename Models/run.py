@@ -7,6 +7,13 @@ from collections import deque
 
 import sklearn.preprocessing
 import warnings
+import json
+
+import asyncio
+import websockets
+
+sockets = {}
+
 warnings.filterwarnings("once")
 
 def gen_teams(num_teams, num_players, death_gamma, model):
@@ -21,7 +28,7 @@ def gen_teams(num_teams, num_players, death_gamma, model):
     return teams
 
 
-def get_state(team_name, player_idx):
+async def get_state(team_name, player_idx):
     """
     obs_state: [9x9 np.array, 4x20 character message array]
     dead: bool if this agent is dead
@@ -40,13 +47,16 @@ def get_state(team_name, player_idx):
     fov_9by9 = big[-9:,-9:]    ## need to get this from server
     messages = ['','','','']   ## need to get this from server
 
-    dead, game_over = False, None     ## need to get this from server
+    dead, game_over = False, None ## need to get this from server
 
     return [fov_9by9, messages], dead, game_over
 
-def send_action_to_server(team_name, player_idx, action):
-
-    pass
+async def send_action_to_server(team_name, player_idx, action):
+    d = {0: "move_up", 1: "move_down", 2: "move_left", 3: "move_right", 4: "", 5: "", 6: "", 7: "", 8: "", 9: ""}
+    action_idx = get_action_idx(action)
+    print(action_idx)
+    data = json.dumps({"type": "AI", "playerid": player_idx, "team_name": team_name, "action": d[action_idx]})
+    await sockets[player_idx].send(data)
 
 
 def get_action(action_idx):
@@ -59,22 +69,22 @@ def get_action_idx(action):
     return np.argmax(action)
 
 
-def game_loop_send_actions(teams):
+async def game_loop_send_actions(teams):
     for team_name in teams:
         for player_idx, p_env in enumerate(teams[team_name]):
             ## request intention of moves from agents
             action = p_env.act(p_env.state)
             p_env.action = action
             ## send move to send:
-            send_action_to_server(team_name, player_idx, action)
+            await send_action_to_server(team_name, player_idx, action)
 
 
-def game_loop_update_state(teams):
+async def game_loop_update_state(teams):
     game_over = True
     for team_name in teams:
         for player_idx, p_env in enumerate(teams[team_name]):
             ## get new game state
-            state, dead, game_over = get_state(team_name, player_idx)
+            state, dead, game_over = await get_state(team_name, player_idx)
             p_env.state = state
             ## calculate score
             output = p_env.step(p_env.action, state, dead, game_over)
@@ -86,7 +96,9 @@ def game_loop_update_state(teams):
     return game_over
 
 
-def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gamma=0.9999):
+async def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gamma=0.9999):
+    uri = "ws://localhost:5678"
+
     game_over = False
 
     model = DRQNAgent(batch_size)
@@ -96,17 +108,19 @@ def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gamma=0.9
     ## get initial game state
     for team_name in teams:
         for player_idx, p_env in enumerate(teams[team_name]):
-            state, dead, game_over = get_state(team_name, player_idx, no_action)
-            p_env.state = state
+            async with websockets.connect(uri) as websocket:
+                sockets[player_idx] = websocket
+                state, dead, game_over = await get_state(team_name, player_idx)
+                p_env.state = state
 
     count = 0
     while not game_over:
-        game_loop_send_actions(teams)
-        game_over = game_loop_update_state(teams)
+        await game_loop_send_actions(teams)
+        game_over = await game_loop_update_state(teams)
         count += 1
         if count == 40:
             game_over = True
-    assert not game_loop_update_state(teams)
+    assert not await game_loop_update_state(teams)
 
     combined_histories = []
     for team_name in teams:
@@ -120,5 +134,7 @@ def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gamma=0.9
 
     return model
 
+asyncio.get_event_loop().run_until_complete(run_game(1, 2))
+asyncio.get_event_loop().run_forever()
 
-run_game(1, 2)
+
