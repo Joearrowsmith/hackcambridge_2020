@@ -105,6 +105,7 @@ async def game_tick(game):
 
             #update = game.get_update()
             player_positions = game.get_positions()
+            grids = game.generate_all_grids()
 
             for player_id, resp in responses.items():
                 kill = None
@@ -117,11 +118,20 @@ async def game_tick(game):
                     resp[0] = "status"
                     resp[1] = "winner"
 
-                reply = {"response" : resp[0],
-                         "response_data" : resp[1],
-                         "update" : None,
-                         "positions" : player_positions
-                         }
+                
+
+                if game.players[player_id].human:
+                    reply = {"response" : resp[0],
+                             "response_data" : resp[1],
+                             "update" : None,
+                             "positions" : player_positions
+                            }
+                else:
+                    reply = {"grid" : game.get_9x9(player_id, grids[game.players["player_id"].team_id],
+                             "messages" : ["","","",""],
+                             "dead" : not game.players["player_id"].alive,
+                             "over" : game.winner,
+                            }
 
                 print(reply)
                 try:
@@ -131,6 +141,21 @@ async def game_tick(game):
 
                 if kill != None:
                     del connections[kill]
+
+            #game.shrink_counter -= 0.05
+            #if game.shrink_counter < 0:
+            #    print("SHRINK")
+            #    game.shrink()
+            #    game.shrink_counter = 5
+            #    
+            #    for pid, vals in connections.items():
+            #        await connections[pid]["sock"].send( json.dumps({
+            #                            "response" : "map",
+            #                            "response_data" : game.handle_request(pid, "map")[1],
+            #                            "update" : None,
+            #                            "positions" : game.get_positions()}))
+
+                
 
             await asyncio.sleep(0.05)
 

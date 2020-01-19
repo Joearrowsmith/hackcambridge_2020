@@ -43,6 +43,17 @@ class Game:
         self.alive_count = 0        
         self.teamcount = 1
         self.team_alive = {}
+        self.shrink_counter = 5
+        self.winner = False
+
+    def shrink(self):
+        self.board = grid.map_shrink(self.board)
+
+    def get_9x9(self, pid, grid):
+        x = self.players[pid].x
+        y = self.players[pid].y
+
+        out = [[]*9]
 
     def add_human_player(self, id_val, id_team, pos):
         self.players[id_val] = Player(True, id_val, int(pos[0]), int(pos[1]), id_team)
@@ -60,7 +71,6 @@ class Game:
                     self.team_alive[team] += 1
                 else:
                     self.team_alive[team] = 1
-                print("SENDING MAP")
                 await connections[pid]["sock"].send( json.dumps({"response" : "map",
                                     "response_data" : self.handle_request(pid, "map")[1],
                                     "update" : None,
@@ -75,6 +85,7 @@ class Game:
         if message["action"] != None:
             self.handle_action(id_val, message["action"])
         return request_resp
+
 
     def handle_request(self, id_val, request):
         if request == "map":
@@ -92,12 +103,48 @@ class Game:
     #def get_update(self):
     #    return self.tick_update_list
 
-    def draw_grid(self):
-        render_copy = self.board.copy()
-        for uid, p in self.players.items():
-            render_copy[p.x][p.y] = 1
-        return render_copy
+    def generate_all_grids(self):
+        grids = {}
+        for tid in self.team_alive:
+            grids[tid] = self.draw_grid(tid)
 
+        return grids
+
+    def draw_grid(self, team_id):
+        render_copy = self.board.copy()
+        mapping = {team_id : 1}
+
+        max_val = None
+        med_val = None
+        min_val = None
+
+        vals = self.team_alive.values()        
+        vals.remove(self.team_alive[team_id])
+
+        max_val = max(vals)
+        vals.remove(max_val)
+
+        if len(vals) > 0:
+            min_val = min(vals)
+            vals.remove(min_val)
+
+        if len(vals) > 0:
+            med_val = vals[0]
+
+        for k,v in self.team_alive.items()
+            if v == max_val:
+                mapping[k] = 2
+            if med_val != None and v == med_val:
+                mapping[k] = 3
+            if min_val != None and v == min_val:
+                mapping[k] = 4
+
+        for p, v in self.players.items():
+            render_copy[v.x][v.y] = mapping[v.team_id]
+
+        return render_copy
+            
+        
     def generate_map(self):
         return np.loadtxt("map_4060.txt")
 
@@ -118,6 +165,7 @@ class Game:
             for p,v in self.players.items():
                 if v.team_id == winner_id:
                     v.winner = True
+                    self.winner = True
 
     def run_push(self, player, x, y, direction):
         pushed = None
