@@ -64,7 +64,9 @@ var map = [[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
 [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
  [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]];
 
-var ws = new WebSocket("ws://86737b81.eu.ngrok.io/");
+//var ws = new WebSocket("ws://86737b81.eu.ngrok.io/");
+var ws = new WebSocket("ws://2660d191.eu.ngrok.io");
+
 
 // END OF GLOBAL VARIABLES
 /* ----------------------------- */
