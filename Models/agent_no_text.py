@@ -11,7 +11,7 @@ from tensorflow.keras import backend as K
 
 
 class DRQNAgent:
-    def __init__(self):
+    def __init__(self, batch_size):
         self.grid_state_size = (9, 9, 7) # 9 x 9, 7 one hot
         self.message_state_size = (4,11) # 4 directions, 2 messages at most seperated by ;
         self.action_size = 10
@@ -25,8 +25,8 @@ class DRQNAgent:
         self.epsilon_decay = 0.99
         self.learning_rate = 0.001
 
-        self.model = self._build_model()
-        self.target_model = self._build_model()
+        self.model = self._build_model(batch_size)
+        self.target_model = self._build_model(batch_size)
         self.update_target_model()
 
     """Huber loss for Q Learning
@@ -47,35 +47,35 @@ class DRQNAgent:
         self.units = 5
 
         # Grid --------------
-        self.grid_input_shape = (None, time_steps, *window_onehot_shape)
+        grid_input_shape = (time_steps, *window_onehot_shape)
         
         grid_inputs = tf.keras.Input(shape=grid_input_shape, name='reccurrent_grid_inputs')
 
         self.grid_layer_1 = tf.keras.layers.ConvLSTM2D(self.units, (3,3), padding="same", activation="relu", recurrent_activation="tanh", 
                 dropout=dropout, recurrent_dropout=dropout, return_sequences=True, stateful=False)
-        self.maxpool_1 = tf.keras.layers.MaxPool2D((2,2))
+        #self.maxpool_1 = tf.keras.layers.MaxPool2D((2,2))
 
         self.grid_layer_2 = tf.keras.layers.ConvLSTM2D(self.units, (3,3), padding="same", activation="relu", recurrent_activation="tanh", 
                 dropout=dropout, recurrent_dropout=dropout, return_sequences=True, stateful=False)
-        self.maxpool_2 = tf.keras.layers.MaxPool2D((2,2))
+        #self.maxpool_2 = tf.keras.layers.MaxPool2D((2,2))
         self.flat = tf.keras.layers.Flatten()
         
         # ------------------
 
         self.dense_merge = tf.keras.layers.Dense(self.units)
-        self.output = tf.keras.layers(self.units, activation='linear')
+        self.output = tf.keras.layers.Dense(self.units, activation='linear')
 
         # ------------------
 
-        grid_x = self.grid_layer_1(self.grid_inputs)
-        grid_x = self.maxpool_1(grid_x)
+        grid_x = self.grid_layer_1(grid_inputs)
+        #grid_x = self.maxpool_1(grid_x)
         grid_x = self.grid_layer_2(grid_x)
-        grid_x = self.maxpool_2(grid_x)
+        #grid_x = self.maxpool_2(grid_x)
         grid_x = self.flat(grid_x)
         grid_x = self.dense_merge(grid_x)
         merge_outputs = self.output(grid_x)
 
-        model = keras.Model(grid_inputs, merge_outputs, name='model_output')
+        model = tf.keras.Model(grid_inputs, merge_outputs, name='model_output')
 
         model.compile(loss=self._huber_loss,
                       optimizer=Adam(lr=self.learning_rate))

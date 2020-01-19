@@ -11,7 +11,7 @@ def gen_teams(num_teams, num_players, death_gamma, model):
             agent_env = MultiAgentEnv(death_gamma, model)
             team.append(agent_env)
         teams[f'ai_team_{t}'] = team
-
+    return teams
 
 def get_state(team_name, player_idx, action):
     """
@@ -20,7 +20,6 @@ def get_state(team_name, player_idx, action):
     game_over: None unless game over then, team ranking
     """
     big = np.genfromtxt("map_1010_filled.txt", delimiter=" ", dtype=np.int32)
-    
     fov_9by9 = big[-9:,-9:]    ## need to get this from server
     messages = ['','','','']   ## need to get this from server
 
@@ -35,11 +34,11 @@ def get_action(action_idx):
     return action
 
 
-def run_game(num_teams = 3, num_players = 2):
+def run_game(batch_size, num_teams = 3, num_players = 2, death_gamma=0.9999):
     game_over = False
 
-    model = DQNAgent()
-    teams = gen_teams(num_teams, num_players, model)    
+    model = DRQNAgent(batch_size)
+    teams = gen_teams(num_teams, num_players, death_gamma, model)    
 
     ## get initial game state
     for team_name in teams:
@@ -63,3 +62,4 @@ def run_game(num_teams = 3, num_players = 2):
     ## or return list sampled states experienced from each agent.
         
 
+run_game(4)
