@@ -29,7 +29,8 @@ import gym
 import numpy as np
 
 class MultiAgentEnv(gym.Env):
-    def __init__(self, death_gamma, bot_type=None):
+    def __init__(self, death_gamma, model, bot_type=None):
+        self.model = model
         self.bot_type = bot_type
         self.fov = (9,9)
         self.action_space = gym.spaces.Discrete(10)
@@ -81,6 +82,9 @@ class MultiAgentEnv(gym.Env):
             current_reward += 5 
         assert current_reward <= 15
         return current_reward  
+
+    def act(self, state):
+        return self.model.act(state)
 
     def step(self, action, obs_state, dead, game_over):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))

@@ -53,7 +53,7 @@ def run_game(batch_size, num_teams = 3, num_players = 2, death_gamma=0.9999):
 
         for team_name in teams:
             for player_idx, p_env in enumerate(teams[team_name]):
-                model.act(p_env.state)
+                p_env.act(p_env.state)
 
         ## request intention of moves from agents
 
@@ -62,7 +62,8 @@ def run_game(batch_size, num_teams = 3, num_players = 2, death_gamma=0.9999):
         # save the game state from training
 
         ## check if game is over
-        pass
+        break
+        
     ## do one training loop
 
     ## or return list sampled states experienced from each agent.
