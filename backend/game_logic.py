@@ -39,7 +39,7 @@ class Game:
         #1 - Game running
         #2 - Game finished
         self.state = -1
-        self.start_countdown = 2
+        self.start_countdown = 3
         self.alive_count = 0        
         self.teamcount = 1
         self.team_alive = {}

@@ -92,6 +92,8 @@ ws.onopen = function() {
     } else if(dataJSON.response == "status") {
       if(dataJSON.response_data == "death"){
         overlayText("Game Over.");
+      } else if(dataJSON.response_data == 'winner') {
+        overlayText("YOU WON.");
       }
     }
 
@@ -345,13 +347,15 @@ function fogRemoval() {
 
 function overlayText(text) {
   svg.append("text")
-        .attr("x", w / 2 - textWidth / 2)
+        .attr("x", w / 2)
         .attr("y", h / 2)
         .attr("class", "bigTextStroke")
+        .attr("font-size","70px")
         .text(text);
   svg.append("text")
-    .attr("x", w / 2 - textWidth / 2)
+    .attr("x", w / 2)
     .attr("y", h / 2)
+    .attr("font-size","70px")
     .attr("class", "bigText")
     .text(text);
 }
