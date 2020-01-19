@@ -40,15 +40,16 @@ async def get_state(team_name, player_idx):
             "dead" : not game.players["player_id"].alive,
             "over" : game.winner,
                         }
+    """
 
     big = np.genfromtxt("map_1010_filled.txt", delimiter=" ", dtype=np.int32)
     fov_9by9 = big[-9:,-9:]    ## need to get this from server
     messages = ['','','','']   ## need to get this from server
 
     dead, game_over = False, None ## need to get this from server
-    """
 
-    return [main_state['grid'], main_state['messages']], main_state['dead'], main_state['over']
+    #return [main_state['grid'], main_state['messages']], main_state['dead'], main_state['over']
+    return [fov_9by9, messages], dead, game_over
 
 async def send_action_to_server(team_name, player_idx, action):
     d = {0: "move_up", 1: "move_down", 2: "move_left", 3: "move_right", 4: "", 5: "", 6: "", 7: "", 8: "", 9: ""}
@@ -133,9 +134,19 @@ async def run_game(websocket, batch_size, epochs, num_teams = 2, num_players = 2
 async def main():
     uri = "ws://localhost:5678"
     async with websockets.connect(uri) as websocket:
+        
 
-        main_state = await websocket.recv()
-        main_state = json.loads(main_state)
+        data = json.dumps({"type":"AI", "request":"map", "playerid":"","action":None})
+        await websocket.send(data)
+
+        rec = await websocket.recv()
+        print(rec)
+        if(json.loads(rec)['type'] == 'uID'):
+            print('wrong json')
+        else:
+            main_state = json.loads(rec)
+            print('--------------------------------')
+            print(main_state)
 
         await run_game(websocket, 1, 2)
         #print(websocket.recv())
