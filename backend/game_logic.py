@@ -6,16 +6,17 @@ import json
 import asyncio
 import server
 from time import sleep
+import grid
 
 class Player:
-    def __init__(self, uid, x, y, team_id):
+    def __init__(self, human, uid, x, y, team_id):
+        self.human = human 
         self.uid = uid
         self.x = x
         self.y = y
         self.team_id = team_id
 
 class Game:
-
     def __init__(self, **kwargs):
         self.board = self.generate_map()
         self.actions = {
@@ -23,7 +24,7 @@ class Game:
                 "move_right" : self.move_player_right,
                 "move_up"    : self.move_player_up,
                 "move_down"  : self.move_player_down,
-                "message"    : self.handle_message,
+                "message"    : self.player_message,
                 "push_left"  : self.push_player_left,
                 "push_right" : self.push_player_right,
                 "push_up"    : self.push_player_up,
@@ -32,11 +33,27 @@ class Game:
         self.players = {}
         self.tick_update_list = []
 
-    def add_human_player(self, id_val):
-        self.players[id_val] = Player(id_val, 5, 5, id_val)
+        #0 - Setup
+        #1 - Game running
+        #2 - Game finished
+        self.state = 0
+        self.start_countdown = 5
+        
+
+    def add_human_player(self, id_val, id_team, pos):
+        self.players[id_val] = Player(True, id_val, pos[0], pos[1], id_team)
+
+    def add_ai_player(self, id_val):
+        self.players[id_val] = Player(False, id_val, 5, 5, id_val)
+
+    def setup(self, connections):
+        coords = grid.create_players(self.board, len(connections),len(connections))
+        for team, players in coords.items():
+            for pos, pid in zip(players, [p for p in connections if p["team"] == team]):
+                self.add_human_player(pid, pos)
 
     def handle_message(self, id_val, message):
-        message = json.loads(message)
+        print("message :", message)
         request_resp = (None, None)
         if message["request"] != None:
             request_resp = self.handle_request(id_val, message["request"])
@@ -46,14 +63,14 @@ class Game:
 
     def handle_request(self, id_val, request):
         if request == "map":
-            return "map", self.board
+            return "map", self.board.tolist()
             
-    def handle_action(id_val, action):
+    def handle_action(self, id_val, action):
         self.actions[action](self.players[id_val])
 
     def get_positions(self):
         deets = []
-        for ids, p in self.players:
+        for ids, p in self.players.items():
             deets.append({"id":p.uid,"x":p.x,"y":p.y,"team_id":p.team_id})
         return deets
 
@@ -67,25 +84,36 @@ class Game:
         return render_copy
 
     def generate_map(self):
-        return np.loadtxt("map_1010_filled.txt")
+        return np.loadtxt("map_60.txt")
+
+    def check_space(self, x, y):
+        val = self.board[x][y]
+        if val == -2:# or :
+            return False
+        elif val == 0:
+            return True
 
     def move_player_left(self, player):
         print("Moving left")
-        p.y -= 1
+        if self.check_space(player.x, player.y-1):
+            player.y -= 1
 
     def move_player_right(self, player):
         print("Moving right")
-        p.y += 1
+        if self.check_space(player.x, player.y+1):
+            player.y += 1
 
     def move_player_up(self, player):
         print("Moving up")
-        p.x -= 1
+        if self.check_space(player.x-1, player.y):
+            player.x -= 1
 
     def move_player_down(self, player):
         print("Moving down")
-        p.x += 1
+        if self.check_space(player.x+1, player.y):
+            player.x += 1
 
-    def handle_message(self, player, message):
+    def player_message(self, player, message):
         print(f"Message: {message}")
 
     def push_player_left(self, player):

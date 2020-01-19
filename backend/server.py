@@ -4,21 +4,19 @@ import random, string, json
 
 connections = {}
 
+
 async def main(game, websocket, path):
     # a unique id for the connection
     ws_id = id(websocket)
-    if ws_id not in connections:
+    if game.state == 0 and ws_id not in connections:
         uID = str(uuid.uuid4())
         game.add_human_player(ws_id) 
         connections[ws_id] = {
             'sock' : websocket,
             'uID' : uID,
-            'message' : "",
+            'message' : {},
+            'human' : None
         }
-
-
-    print(f"Responding to {ws_id}")
-    
 
     # Unique ID for the game
     uIDJson = json.dumps({'type': 'uID', 'uID': ws_id})
@@ -28,7 +26,11 @@ async def main(game, websocket, path):
     try:
         async for message in websocket:
             print(f"New action: {message}")
-            connections[ws_id]["message"] = message
+            if validate_message(message):
+                print("valid message")
+                connections[ws_id]["message"] = json.loads(message)
+            else:
+                print("invalid message")
 
             '''
             can do a json data type with a type field
@@ -45,25 +47,71 @@ async def main(game, websocket, path):
 #            await vals["sock"].send(vals["uID"])
 #        await asyncio.sleep(3)
 
+def ai_check(message):
+    try:
+        mess = json.loads(message)
+    except json.decoder.JSONDecodeError as e:
+        return False
+    
+    if "ai" in mess:
+        return True
+    else:
+        return False
+    
+
+def validate_message(message):
+    try:
+        mess = json.loads(message)
+    except json.decoder.JSONDecodeError as e:
+        return False
+
+    if "playerid" in mess:
+        return True
+    else:
+        return False
+
+def clear_queue():
+    for _, v in connections.items():
+        v["message"] = {}
+    
 async def game_tick(game):
     while True:
-        responses = {}
-        for player_id, vals in connections.items():
-            responses[player_id] = game.handle_message(player_id, vals["message"])
+        if game.state == 0:
+            if game.start_countdown == 0:
+                game.setup(connections)
+                game.state = 1
+            else:
+                game.start_countdown -= 1
+                clear_queue()
+                await asyncio.sleep(1)
+        elif game.state == 1:
+            responses = {}
+            for player_id, vals in connections.items():
+                mess = vals["message"]
+                if "playerid" in mess:
+                    responses[player_id] = game.handle_message(player_id, mess)
+                else:
+                    responses[player_id] = (None, None)
 
-        #update = game.get_update()
-        player_positions = game.get_positions()
+                vals["message"] = {}
 
-        for player_id, resp in responses.items():
-            reply = {"response" : resp[0],
-                     "response_data" : resp[1],
-                     "update" : None
-                     "positions" : player_positions
-                     }
+            #update = game.get_update()
+            player_positions = game.get_positions()
 
-            connections[player_id]["sock"].send(reply)
+            for player_id, resp in responses.items():
+                reply = {"response" : resp[0],
+                         "response_data" : resp[1],
+                         "update" : None,
+                         "positions" : player_positions
+                         }
 
-        await asyncio.sleep(0.05)
+                print(reply)
+                try:
+                    await connections[player_id]["sock"].send(json.dumps(reply))
+                except websockets.exceptions.ConnectionClosedOK:
+                    pass
+
+            await asyncio.sleep(0.05)
 
 
 def run_server(serverIP, port, game):
