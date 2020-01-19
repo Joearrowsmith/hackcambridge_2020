@@ -127,7 +127,7 @@ async def game_tick(game):
                              "positions" : player_positions
                             }
                 else:
-                    reply = {"grid" : game.get_9x9(player_id, grids[game.players["player_id"].team_id],
+                    reply = {"grid" : game.get_9x9(player_id, grids[game.players["player_id"].team_id]),
                              "messages" : ["","","",""],
                              "dead" : not game.players["player_id"].alive,
                              "over" : game.winner,

@@ -53,7 +53,15 @@ class Game:
         x = self.players[pid].x
         y = self.players[pid].y
 
-        out = [[]*9]
+        out = []
+
+        for i in zip(a in out, range(x-4, x+5)):
+            arr = []
+            for j in range(y-4, y+5):
+                arr.append(grid[i][j])
+            out.append(arr)
+
+        return out
 
     def add_human_player(self, id_val, id_team, pos):
         self.players[id_val] = Player(True, id_val, int(pos[0]), int(pos[1]), id_team)
@@ -131,7 +139,7 @@ class Game:
         if len(vals) > 0:
             med_val = vals[0]
 
-        for k,v in self.team_alive.items()
+        for k,v in self.team_alive.items():
             if v == max_val:
                 mapping[k] = 2
             if med_val != None and v == med_val:
