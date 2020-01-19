@@ -6,6 +6,7 @@ import json
 import asyncio
 import server
 from time import sleep
+import grid
 
 class Player:
     def __init__(self, human, uid, x, y, team_id):
@@ -32,14 +33,24 @@ class Game:
         self.players = {}
         self.tick_update_list = []
 
-    def add_human_player(self, id_val):
-        self.players[id_val] = Player(True, id_val, 5, 5, id_val)
+        #0 - Setup
+        #1 - Game running
+        #2 - Game finished
+        self.state = 0
+        self.start_countdown = 5
+        
+
+    def add_human_player(self, id_val, id_team, pos):
+        self.players[id_val] = Player(True, id_val, pos[0], pos[1], id_team)
 
     def add_ai_player(self, id_val):
         self.players[id_val] = Player(False, id_val, 5, 5, id_val)
 
-    #def generate_ai_resp(self, id_val):
-        
+    def setup(self, connections):
+        coords = grid.create_players(self.board, len(connections),len(connections))
+        for team, players in coords.items():
+            for pos, pid in zip(players, [p for p in connections if p["team"] == team]):
+                self.add_human_player(pid, pos)
 
     def handle_message(self, id_val, message):
         print("message :", message)

@@ -8,7 +8,7 @@ connections = {}
 async def main(game, websocket, path):
     # a unique id for the connection
     ws_id = id(websocket)
-    if ws_id not in connections:
+    if game.state == 0 and ws_id not in connections:
         uID = str(uuid.uuid4())
         game.add_human_player(ws_id) 
         connections[ws_id] = {
@@ -69,37 +69,49 @@ def validate_message(message):
         return True
     else:
         return False
+
+def clear_queue():
+    for _, v in connections.items():
+        v["message"] = {}
     
 async def game_tick(game):
     while True:
-        responses = {}
-        for player_id, vals in connections.items():
-            mess = vals["message"]
-            if "playerid" in mess:
-                responses[player_id] = game.handle_message(player_id, mess)
+        if game.state == 0:
+            if game.start_countdown == 0:
+                game.setup(connections)
+                game.state = 1
             else:
-                responses[player_id] = (None, None)
+                game.start_countdown -= 1
+                clear_queue()
+                await asyncio.sleep(1)
+        elif game.state == 1:
+            responses = {}
+            for player_id, vals in connections.items():
+                mess = vals["message"]
+                if "playerid" in mess:
+                    responses[player_id] = game.handle_message(player_id, mess)
+                else:
+                    responses[player_id] = (None, None)
 
-            vals["message"] = {}
+                vals["message"] = {}
 
-        #update = game.get_update()
-        player_positions = game.get_positions()
+            #update = game.get_update()
+            player_positions = game.get_positions()
 
-        for player_id, resp in responses.items():
-            reply = {"response" : resp[0],
-                     "response_data" : resp[1],
-                     "update" : None,
-                     "positions" : player_positions
-                     }
+            for player_id, resp in responses.items():
+                reply = {"response" : resp[0],
+                         "response_data" : resp[1],
+                         "update" : None,
+                         "positions" : player_positions
+                         }
 
-            print(reply)
-            try:
-                await connections[player_id]["sock"].send(json.dumps(reply))
-            except websockets.exceptions.ConnectionClosedOK:
-                pass
+                print(reply)
+                try:
+                    await connections[player_id]["sock"].send(json.dumps(reply))
+                except websockets.exceptions.ConnectionClosedOK:
+                    pass
 
-
-        await asyncio.sleep(0.05)
+            await asyncio.sleep(0.05)
 
 
 def run_server(serverIP, port, game):
