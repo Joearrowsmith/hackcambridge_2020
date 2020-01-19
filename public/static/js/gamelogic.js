@@ -39,6 +39,12 @@ var w = 66*20, // width of map
 var rows = Math.ceil(h / sz);
 var cols = Math.ceil(w / sz);
 
+function updateMap(map) {
+  w = map.length * sz;
+  h = map[0].length * sz;
+  rows = Math.ceil(h / sz);
+  cols = Math.ceil(w / sz);
+}
 
 
 // default map
@@ -81,6 +87,7 @@ ws.onopen = function() {
     if(dataJSON.response == "map") {
       //map = dataJSON.response_data;
       //updateDimensions(dataJSON.response_data);
+      updateMap(dataJSON.response_data);
       createMap(dataJSON.response_data);
     }
 
@@ -138,7 +145,50 @@ var bottomRightCell = function(c) { return cells[Math.min(rows - 1, c.r + 1) * c
 var topRightCell = function(c) { return cells[Math.max(0, c.r - 1) * cols + Math.min(cols - 1, c.c + 1)]; };
 */
 // Creating cells & walls
+$(document).keydown(function(e) {
+  //x_pos = parseInt(player.attr("x"));
+  //y_pos = parseInt(player.attr("y"));
+  duration = 50;
+  switch(e.which) {
+      case 37: // left
+        var d = JSON.stringify(
+          {"type":"human", "request":null, "playerid":myid,"action":"move_left"}
+        );
+        ws.send(d);
+        /*
+        player.transition()
+        .ease(d3.easeLinear)
+        .duration(duration)
+        .attr("x",x_pos-sz);
+        */
+        break;
 
+      case 38: // up
+      d = JSON.stringify(
+        {"type":"human", "request":null, "playerid":myid,"action":"move_up"}
+      );
+        ws.send(d);
+        break;
+
+      case 39: // right
+      d = JSON.stringify(
+        {"type":"human", "request":null, "playerid":myid,"action":"move_right"}
+      );
+        ws.send(d);
+        break;
+
+      case 40: // down
+      d = JSON.stringify(
+        {"type":"human", "request":null, "playerid":myid,"action":"move_down"}
+      );
+        ws.send(d);
+        break;
+
+      default: return; // exit this handler for other keys
+  }
+  e.preventDefault(); // prevent the default action (scroll / move caret)
+  //fogRemoval();
+});
 
 function createMap(map) {
   // define the cells
@@ -148,8 +198,8 @@ function createMap(map) {
   return {
     r: row,
     c: col,
-    x: col * sz + r,
-    y: row * sz + r,
+    y: col * sz + r,
+    x: row * sz + r,
     type: map[col][row]
   };
   });
@@ -186,11 +236,7 @@ function createMap(map) {
   return cell;
 }
 
-//var cell = createMap();
-
-function updateMap() {
-
-}
+var cell = createMap();
 
 
 
@@ -293,60 +339,7 @@ function fogRemoval() {
 //fogRemoval();
 
 // Using jQuery for keydown functions
-$(document).keydown(function(e) {
-  x_pos = parseInt(player.attr("x"));
-  y_pos = parseInt(player.attr("y"));
-  duration = 50;
-  switch(e.which) {
-      case 37: // left
-        var d = JSON.stringify(
-          {"type":"human", "request":null, "playerid":myid,"action":"move_left"}
-        );
-        ws.send(d);
-        player.transition()
-        .ease(d3.easeLinear)
-        .duration(duration)
-        .attr("x",x_pos-sz);
-        break;
 
-      case 38: // up
-      d = JSON.stringify(
-        {"type":"human", "request":null, "playerid":myid,"action":"move_up"}
-      );
-        ws.send(d);
-        player.transition()
-        .ease(d3.easeLinear)
-        .duration(duration)
-        .attr("y",y_pos-sz);
-        break;
-
-      case 39: // right
-      d = JSON.stringify(
-        {"type":"human", "request":null, "playerid":myid,"action":"move_right"}
-      );
-        ws.send(d);
-        player.transition()
-        .ease(d3.easeLinear)
-        .duration(duration)
-        .attr("x",x_pos+sz);
-        break;
-
-      case 40: // down
-      d = JSON.stringify(
-        {"type":"human", "request":null, "playerid":myid,"action":"move_down"}
-      );
-        ws.send(d);
-        player.transition()
-        .ease(d3.easeLinear)
-        .duration(duration)
-        .attr("y",y_pos+sz);
-        break;
-
-      default: return; // exit this handler for other keys
-  }
-  e.preventDefault(); // prevent the default action (scroll / move caret)
-  //fogRemoval();
-});
 
 /* ------------------------------- */
 // BORDER CLOSING IN
