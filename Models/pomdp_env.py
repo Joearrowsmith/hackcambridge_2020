@@ -29,15 +29,19 @@ from gym import Env
 import numpy as np
 
 class MultiAgentEnv(gym.Env):
-    def __init__(self, death_gamma, bot_type=None):
+    def __init__(self, death_gamma, model, bot_type=None):
+        self.model = model
         self.bot_type = bot_type
         self.fov = (9,9)
         self.action_space = spaces.Discrete(10)
         self.observation_space = spaces.Box(low=-2, high=4, shape=self.fov, dtype=np.int32)
-
+        char_max = 4
+        self.observation_text = spaces.Box(low=0, high=char_max, shape=(8), dtype=np.int32)
         self.death_gamma = death_gamma
         self.death = None # {obs_state, reward, step_number}
         self.step_num = 0
+
+        self.get_init_board_state()
 
     def calculate_reward(self, die=False, team_die=False, 
                          bot_type=None):
@@ -92,7 +96,6 @@ class MultiAgentEnv(gym.Env):
 
     def step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
-        
         obs_state, dead, game_over = get_next_obs_state(action)
         """
         obs_state: [7x7 np.array, 4x20 character message array]

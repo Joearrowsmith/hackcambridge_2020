@@ -12,7 +12,7 @@ import tensorflow as tf
 
 
 
-class DQNAgent:
+class DRQNAgent:
     def __init__(self):
         self.grid_state_size = (9, 9, 7) # 9 x 9, 7 one hot
         self.message_state_size = (4,11) # 4 directions, 2 messages at most seperated by ;

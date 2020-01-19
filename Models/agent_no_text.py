@@ -3,16 +3,13 @@ import gym
 import numpy as np
 import os.path
 from collections import deque
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.optimizers import Adam
-from keras import backend as K
+from tf.keras.optimizers import Adam
+from tf.keras import backend as K
 
 import tensorflow as tf
 
 
-
-class DQNAgent:
+class DRQNAgent:
     def __init__(self):
         self.grid_state_size = (9, 9, 7) # 9 x 9, 7 one hot
         self.message_state_size = (4,11) # 4 directions, 2 messages at most seperated by ;
@@ -44,8 +41,6 @@ class DQNAgent:
         quadratic_loss = 0.5 * K.square(clip_delta) + clip_delta * (K.abs(error) - clip_delta)
 
         return K.mean(tf.where(cond, squared_loss, quadratic_loss))
-
-
 
     def _build_model(self, batch_size, time_steps=25, window_onehot_shape=(9,9,7), dropout=0.0, recurrent_dropout=0.0):
         self.units = 5
@@ -95,13 +90,15 @@ class DQNAgent:
     def act(self, state):
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.action_size)
-        act_values = self.model.predict(state)
+        grid_state, message_state = state
+        act_values = self.model.predict(grid_state)
         return np.argmax(act_values[0])  # returns action
 
     def replay(self, batch_size):
         minibatch = random.sample(self.memory, batch_size)
         for state, action, reward, next_state, done in minibatch:
-            target = self.model.predict(state)
+            grid_state, message_state = state
+            target = self.model.predict(grid_state)
             if done:
                 target[0][action] = reward
             else:
