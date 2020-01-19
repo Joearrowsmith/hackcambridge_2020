@@ -40,7 +40,9 @@ class MultiAgentEnv(gym.Env):
         self.death_gamma = death_gamma
         self.death = None # {obs_state, reward, step_number}
         self.step_num = 0
+
         self.state = None
+        self.action = None
 
     def calculate_reward(self, die=False, team_die=False, 
                          bot_type=None):

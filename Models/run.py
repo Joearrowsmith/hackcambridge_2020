@@ -33,6 +33,9 @@ def get_action(action_idx):
     action[action_idx] = 1
     return action
 
+def get_action_idx(action):
+    return np.argmax(action)
+
 
 def run_game(batch_size, num_teams = 3, num_players = 2, death_gamma=0.9999):
     game_over = False
@@ -49,13 +52,15 @@ def run_game(batch_size, num_teams = 3, num_players = 2, death_gamma=0.9999):
 
     while not game_over:
 
-        actions = []
-
         for team_name in teams:
             for player_idx, p_env in enumerate(teams[team_name]):
-                p_env.act(p_env.state)
+                ## request intention of moves from agents
+                action = p_env.act(p_env.state)
+                p_env.action = action
 
-        ## request intention of moves from agents
+                ## send move to send:
+
+                
 
         ## execute the moves (send to server) and calculate the score and get new game state
 
