@@ -6,6 +6,7 @@ import json
 import asyncio
 import server
 from time import sleep
+import grid
 
 class Player:
     def __init__(self, human, uid, x, y, team_id):
@@ -32,14 +33,32 @@ class Game:
         self.players = {}
         self.tick_update_list = []
 
-    def add_human_player(self, id_val):
-        self.players[id_val] = Player(True, id_val, 5, 5, id_val)
+        #0 - Setup
+        #1 - Game running
+        #2 - Game finished
+        self.state = -1
+        self.start_countdown = 2
+        
+        self.teamcount = 1
+
+    def add_human_player(self, id_val, id_team, pos):
+        self.players[id_val] = Player(True, id_val, int(pos[0]), int(pos[1]), id_team)
 
     def add_ai_player(self, id_val):
         self.players[id_val] = Player(False, id_val, 5, 5, id_val)
 
-    #def generate_ai_resp(self, id_val):
-        
+    async def setup(self, connections):
+        print(f"connections: {connections}")
+        coords = grid.create_players(self.board, len(connections),len(connections))
+        for team, players in coords.items():
+            for pos, pid in zip(players, [p for p, v in connections.items() if v["team"] == team]):
+                self.add_human_player(pid, team, pos)
+                print("SENDING MAP")
+                await connections[pid]["sock"].send( json.dumps({"response" : "map",
+                                    "response_data" : self.handle_request(pid, "map")[1],
+                                    "update" : None,
+                                    "positions" : self.get_positions()
+                                    }))
 
     def handle_message(self, id_val, message):
         print("message :", message)
@@ -73,7 +92,7 @@ class Game:
         return render_copy
 
     def generate_map(self):
-        return np.loadtxt("map_60.txt")
+        return np.loadtxt("map_4060.txt")
 
     def check_space(self, x, y):
         val = self.board[x][y]
