@@ -8,14 +8,14 @@ import server
 from time import sleep
 
 class Player:
-    def __init__(self, uid, x, y, team_id):
+    def __init__(self, human, uid, x, y, team_id):
+        self.human = human 
         self.uid = uid
         self.x = x
         self.y = y
         self.team_id = team_id
 
 class Game:
-
     def __init__(self, **kwargs):
         self.board = self.generate_map()
         self.actions = {
@@ -33,7 +33,13 @@ class Game:
         self.tick_update_list = []
 
     def add_human_player(self, id_val):
-        self.players[id_val] = Player(id_val, 5, 5, id_val)
+        self.players[id_val] = Player(True, id_val, 5, 5, id_val)
+
+    def add_ai_player(self, id_val):
+        self.players[id_val] = Player(False, id_val, 5, 5, id_val)
+
+    #def generate_ai_resp(self, id_val):
+        
 
     def handle_message(self, id_val, message):
         print("message :", message)
@@ -46,7 +52,7 @@ class Game:
 
     def handle_request(self, id_val, request):
         if request == "map":
-            return "map", self.board
+            return "map", self.board.tolist()
             
     def handle_action(self, id_val, action):
         self.actions[action](self.players[id_val])
@@ -67,23 +73,34 @@ class Game:
         return render_copy
 
     def generate_map(self):
-        return np.loadtxt("map_1010_filled.txt")
+        return np.loadtxt("map_60.txt")
+
+    def check_space(self, x, y):
+        val = self.board[x][y]
+        if val == -2:# or :
+            return False
+        elif val == 0:
+            return True
 
     def move_player_left(self, player):
         print("Moving left")
-        player.y -= 1
+        if self.check_space(player.x, player.y-1):
+            player.y -= 1
 
     def move_player_right(self, player):
         print("Moving right")
-        player.y += 1
+        if self.check_space(player.x, player.y+1):
+            player.y += 1
 
     def move_player_up(self, player):
         print("Moving up")
-        player.x -= 1
+        if self.check_space(player.x-1, player.y):
+            player.x -= 1
 
     def move_player_down(self, player):
         print("Moving down")
-        player.x += 1
+        if self.check_space(player.x+1, player.y):
+            player.x += 1
 
     def player_message(self, player, message):
         print(f"Message: {message}")

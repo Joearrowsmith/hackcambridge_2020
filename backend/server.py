@@ -4,6 +4,7 @@ import random, string, json
 
 connections = {}
 
+
 async def main(game, websocket, path):
     # a unique id for the connection
     ws_id = id(websocket)
@@ -14,11 +15,8 @@ async def main(game, websocket, path):
             'sock' : websocket,
             'uID' : uID,
             'message' : {},
+            'human' : None
         }
-
-
-    print(f"Responding to {ws_id}")
-    
 
     # Unique ID for the game
     uIDJson = json.dumps({'type': 'uID', 'uID': ws_id})
@@ -49,6 +47,17 @@ async def main(game, websocket, path):
 #            await vals["sock"].send(vals["uID"])
 #        await asyncio.sleep(3)
 
+def ai_check(message):
+    try:
+        mess = json.loads(message)
+    except json.decoder.JSONDecodeError as e:
+        return False
+    
+    if "ai" in mess:
+        return True
+    else:
+        return False
+    
 
 def validate_message(message):
     try:
@@ -68,6 +77,8 @@ async def game_tick(game):
             mess = vals["message"]
             if "playerid" in mess:
                 responses[player_id] = game.handle_message(player_id, mess)
+            else:
+                responses[player_id] = (None, None)
 
             vals["message"] = {}
 
@@ -82,7 +93,11 @@ async def game_tick(game):
                      }
 
             print(reply)
-            await connections[player_id]["sock"].send(json.dumps(reply))
+            try:
+                await connections[player_id]["sock"].send(json.dumps(reply))
+            except websockets.exceptions.ConnectionClosedOK:
+                pass
+
 
         await asyncio.sleep(0.05)
 
