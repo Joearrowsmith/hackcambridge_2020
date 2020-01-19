@@ -9,13 +9,6 @@ async def main(game, websocket, path):
     ws_id = id(websocket)
     if game.state in (-1, 0) and ws_id not in connections:
         uID = str(uuid.uuid4())
-        connections[ws_id] = {
-            'sock' : websocket,
-            'uID' : uID,
-            'message' : {},
-            'human' : None,
-            'team' : game.teamcount,
-        }
         #hacky af
         game.teamcount += 1
 
@@ -29,9 +22,23 @@ async def main(game, websocket, path):
             print(f"New action: {message}")
             if validate_message(message):
                 print("valid message")
-                connections[ws_id]["message"] = json.loads(message)
+                #connections[ws_id]["message"] = json.loads(message)
+                message = json.loads(message)
+             
+            if message["type"] == "AI":
+                connections[message["playerid"]] = {'sock':ws_id,
+                                                    'message':{},
+                                                    'human':False,
+                                                    'team' : message["team_name"]}
             else:
-                print("invalid message")
+                connections[ws_id] = {
+                    'sock' : websocket,
+                    'uID' : uID,
+                    'message' : {},
+                    'human' : True,
+                    'team' : ws_id,
+                }
+
 
             '''
             can do a json data type with a type field
