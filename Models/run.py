@@ -100,9 +100,6 @@ def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gamma=0.9
     merged = deque(list(itertools.chain.from_iterable(combined_histories)))
     model.memory = model.memory + merged
 
-
-    print(model.memory)
-
     for e in range(epochs):
         model.replay(batch_size)
         
