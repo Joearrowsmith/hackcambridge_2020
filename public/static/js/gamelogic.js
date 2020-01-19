@@ -299,6 +299,7 @@ function addPlayer(playerLocs) {
     { "x_axis": 80, "y_axis": 100, "color" : "purple"},
     { "x_axis": 400, "y_axis": 200, "color" : "red"}];
   */
+  var colours = ['red', 'blue', 'orange', 'purple', 'black', 'pink', 'green']
   playerLocs = [playerLocs];
   var p = svg.selectAll("players")
     .data(playerLocs)
@@ -310,7 +311,7 @@ function addPlayer(playerLocs) {
     .attr("type", 'player')
     .attr("width", sz)
     .attr("height", sz)
-    .style("fill", "red");
+    .style("fill", colours[Math.floor(Math.random() * 8)]);
 }
 
 
