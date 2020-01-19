@@ -15,6 +15,8 @@ class Player:
         self.x = x
         self.y = y
         self.team_id = team_id
+        self.alive = True
+        self.winner = False
 
 class Game:
     def __init__(self, **kwargs):
@@ -38,8 +40,28 @@ class Game:
         #2 - Game finished
         self.state = -1
         self.start_countdown = 2
-        
+        self.alive_count = 0        
         self.teamcount = 1
+        self.team_alive = {}
+        self.shrink_counter = 5
+        self.winner = False
+
+    def shrink(self):
+        self.board = grid.map_shrink(self.board)
+
+    def get_9x9(self, pid, grid):
+        x = self.players[pid].x
+        y = self.players[pid].y
+
+        out = []
+
+        for i in zip(a in out, range(x-4, x+5)):
+            arr = []
+            for j in range(y-4, y+5):
+                arr.append(grid[i][j])
+            out.append(arr)
+
+        return out
 
     def add_human_player(self, id_val, id_team, pos):
         self.players[id_val] = Player(True, id_val, int(pos[0]), int(pos[1]), id_team)
@@ -53,7 +75,10 @@ class Game:
         for team, players in coords.items():
             for pos, pid in zip(players, [p for p, v in connections.items() if v["team"] == team]):
                 self.add_human_player(pid, team, pos)
-                print("SENDING MAP")
+                if team in self.team_alive:
+                    self.team_alive[team] += 1
+                else:
+                    self.team_alive[team] = 1
                 await connections[pid]["sock"].send( json.dumps({"response" : "map",
                                     "response_data" : self.handle_request(pid, "map")[1],
                                     "update" : None,
@@ -62,16 +87,17 @@ class Game:
 
     def handle_message(self, id_val, message):
         print("message :", message)
-        request_resp = (None, None)
+        request_resp = [None, None]
         if message["request"] != None:
             request_resp = self.handle_request(id_val, message["request"])
         if message["action"] != None:
             self.handle_action(id_val, message["action"])
         return request_resp
 
+
     def handle_request(self, id_val, request):
         if request == "map":
-            return "map", self.board.tolist()
+            return ["map", self.board.tolist()]
             
     def handle_action(self, id_val, action):
         self.actions[action](self.players[id_val])
@@ -85,40 +111,126 @@ class Game:
     #def get_update(self):
     #    return self.tick_update_list
 
-    def draw_grid(self):
-        render_copy = self.board.copy()
-        for uid, p in self.players.items():
-            render_copy[p.x][p.y] = 1
-        return render_copy
+    def generate_all_grids(self):
+        grids = {}
+        for tid in self.team_alive:
+            grids[tid] = self.draw_grid(tid)
 
+        return grids
+
+    def draw_grid(self, team_id):
+        render_copy = self.board.copy()
+        mapping = {team_id : 1}
+
+        max_val = None
+        med_val = None
+        min_val = None
+
+        vals = list(self.team_alive.values())
+        vals.remove(self.team_alive[team_id])
+
+        max_val = max(vals)
+        vals.remove(max_val)
+
+        if len(vals) > 0:
+            min_val = min(vals)
+            vals.remove(min_val)
+
+        if len(vals) > 0:
+            med_val = vals[0]
+
+        for k,v in self.team_alive.items():
+            if v == max_val:
+                mapping[k] = 2
+            if med_val != None and v == med_val:
+                mapping[k] = 3
+            if min_val != None and v == min_val:
+                mapping[k] = 4
+
+        for p, v in self.players.items():
+            render_copy[v.x][v.y] = mapping[v.team_id]
+
+        return render_copy
+            
+        
     def generate_map(self):
         return np.loadtxt("map_4060.txt")
 
-    def check_space(self, x, y):
+    def run_die(self, pid):
+        pid.alive = False
+        self.team_alive[pid.team_id] -= 1
+        
+        alive_track = 0
+        winner_id = None
+        for team, count in self.team_alive.items():
+            if count > 0:
+                alive_track += 1
+                winner_id = team
+
+            if alive_track == 2:
+                return
+        if alive_track == 1:
+            for p,v in self.players.items():
+                if v.team_id == winner_id:
+                    v.winner = True
+                    self.winner = True
+
+    def run_push(self, player, x, y, direction):
+        pushed = None
+        for p,v in self.players.items():
+            if v.x == x and v.y == y:
+                pushed = v
+                break
+
+        if pushed == None:
+            return
+
+        if direction == 1:
+            self.move_player_left(v)
+        elif direction == 2:
+            self.move_player_right(v)
+        elif direction == 3:
+            self.move_player_up(v)
+        elif direction == 4:
+            self.move_player_down(v)
+
+        if self.board[x][y] == 0:
+            return True
+        else:
+            return False
+
+
+    def check_space(self, player, x, y, direction):
         val = self.board[x][y]
+        pos = self.get_positions()
         if val == -2:# or :
             return False
+        elif (x,y) in [(p['x'], p['y']) for p in pos]:
+            return self.run_push(player, x, y, direction)
+        elif val == -1:
+            self.run_die(player)
+            return True
         elif val == 0:
             return True
 
     def move_player_left(self, player):
         print("Moving left")
-        if self.check_space(player.x, player.y-1):
+        if self.check_space(player, player.x, player.y-1, 1):
             player.y -= 1
 
     def move_player_right(self, player):
         print("Moving right")
-        if self.check_space(player.x, player.y+1):
+        if self.check_space(player, player.x, player.y+1, 2):
             player.y += 1
 
     def move_player_up(self, player):
         print("Moving up")
-        if self.check_space(player.x-1, player.y):
+        if self.check_space(player, player.x-1, player.y, 3):
             player.x -= 1
 
     def move_player_down(self, player):
         print("Moving down")
-        if self.check_space(player.x+1, player.y):
+        if self.check_space(player, player.x+1, player.y, 4):
             player.x += 1
 
     def player_message(self, player, message):

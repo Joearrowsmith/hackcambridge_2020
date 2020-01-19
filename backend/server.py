@@ -78,8 +78,9 @@ def clear_queue():
 async def game_tick(game):
     while True:
         if game.state == -1:
-            if len(connections) >= 2:
+            if len(connections) >= 1:
                 game.state = 0
+
             print("state -1")
             await asyncio.sleep(1)
         elif game.state == 0:
@@ -98,25 +99,63 @@ async def game_tick(game):
                 if "playerid" in mess:
                     responses[player_id] = game.handle_message(player_id, mess)
                 else:
-                    responses[player_id] = (None, None)
+                    responses[player_id] = [None, None]
 
                 vals["message"] = {}
 
             #update = game.get_update()
             player_positions = game.get_positions()
+            grids = game.generate_all_grids()
 
             for player_id, resp in responses.items():
-                reply = {"response" : resp[0],
-                         "response_data" : resp[1],
-                         "update" : None,
-                         "positions" : player_positions
-                         }
+                kill = None
+                if not game.players[player_id].alive:
+                    resp[0] = "status"
+                    resp[1] = "death"
+                    kill = player_id
+
+                if game.players[player_id].winner:
+                    resp[0] = "status"
+                    resp[1] = "winner"
+
+                
+
+                if game.players[player_id].human:
+                    reply = {"response" : resp[0],
+                             "response_data" : resp[1],
+                             "update" : None,
+                             "positions" : player_positions
+                            }
+                else:
+                    reply = {"grid" : game.get_9x9(player_id, grids[game.players["player_id"].team_id]),
+                             "messages" : ["","","",""],
+                             "dead" : not game.players["player_id"].alive,
+                             "over" : game.winner,
+                            }
 
                 print(reply)
                 try:
                     await connections[player_id]["sock"].send(json.dumps(reply))
                 except websockets.exceptions.ConnectionClosedOK:
                     pass
+
+                if kill != None:
+                    del connections[kill]
+
+            #game.shrink_counter -= 0.05
+            #if game.shrink_counter < 0:
+            #    print("SHRINK")
+            #    game.shrink()
+            #    game.shrink_counter = 5
+            #    
+            #    for pid, vals in connections.items():
+            #        await connections[pid]["sock"].send( json.dumps({
+            #                            "response" : "map",
+            #                            "response_data" : game.handle_request(pid, "map")[1],
+            #                            "update" : None,
+            #                            "positions" : game.get_positions()}))
+
+                
 
             await asyncio.sleep(0.05)
 
