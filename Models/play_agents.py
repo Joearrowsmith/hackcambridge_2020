@@ -133,4 +133,4 @@ def run_game(load_file, num_teams = 3, num_players = 2, death_gamma=0.9999):
     return model
 
 
-run_game(1, 2)
+model = run_game(1, 2)
