@@ -63,7 +63,7 @@ class DRQNAgent:
         # ------------------
 
         self.dense_merge = tf.keras.layers.Dense(self.units)
-        self.output = tf.keras.layers.Dense(self.units, activation='linear')
+        self.output = tf.keras.layers.Dense(10, activation='linear')
 
         # ------------------
 
@@ -98,17 +98,21 @@ class DRQNAgent:
     def replay(self, batch_size):
         minibatch = random.sample(self.memory, batch_size)
         for state, action, reward, next_state, done in minibatch:
-            grid_state, message_state = state
-            print(grid_state.shape)
+            #grid_state, message_state = state
+            grid_state = state #, message_state = state
+            grid_state = np.concatenate(grid_state, axis=0)
+            grid_state = np.reshape(grid_state, (1, 25, 9, 9, 7))
             target = self.model.predict(grid_state)
             if done:
                 target[0][action] = reward
             else:
+                next_state = np.concatenate(next_state, axis=0)
+                next_state = np.reshape(next_state, (1, 25, 9, 9, 7))
                 # a = self.model.predict(next_state)[0]
                 t = self.target_model.predict(next_state)[0]
                 target[0][action] = reward + self.gamma * np.amax(t)
                 # target[0][action] = reward + self.gamma * t[np.argmax(a)]
-            self.model.fit(state, target, epochs=1, verbose=0)
+            self.model.fit(grid_state, target, epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 

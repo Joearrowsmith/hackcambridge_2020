@@ -43,7 +43,7 @@ def encode_grid_onehot(grid, num_categories=7):
     return grid_encoded
 
 class MultiAgentEnv(gym.Env):
-    def __init__(self, death_gamma, model, histlen=100, lstm_time_input=25, bot_type=None):
+    def __init__(self, death_gamma, model, histlen=100, lstm_time_input=26, bot_type=None):
         self.model = model
         self.bot_type = bot_type
         self.fov = (9,9)
@@ -64,10 +64,10 @@ class MultiAgentEnv(gym.Env):
         ## convert state to onehot
         one_hot_next_state = encode_grid_onehot(next_state[0])
         time_state = list(self.time_history)
-        self.time_history.append([one_hot_next_state, next_state[1]])
+        self.time_history.append([one_hot_next_state])#, next_state[1]])
         next_time_state = list(self.time_history)
         if len(self.time_history) == self.time_history.maxlen: 
-            self.history.append((self.time_history[-2], action, reward, next_state, done))
+            self.history.append((time_state[:-1], action, reward, next_time_state[1:], done))
 
     def calculate_reward(self, die=False, team_die=False, 
                          bot_type=None):

@@ -5,6 +5,10 @@ import numpy as np
 import itertools
 from collections import deque
 
+import sklearn.preprocessing
+import warnings
+warnings.filterwarnings("once")
+
 def gen_teams(num_teams, num_players, death_gamma, model):
     
     teams = {}
