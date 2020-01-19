@@ -96,9 +96,7 @@ async def game_loop_update_state(teams):
     return game_over
 
 
-async def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gamma=0.9999):
-    uri = "ws://localhost:5678"
-
+async def run_game(websocket, batch_size, epochs, num_teams = 2, num_players = 2, death_gamma=0.9999):
     game_over = False
 
     model = DRQNAgent(batch_size)
@@ -108,10 +106,9 @@ async def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gam
     ## get initial game state
     for team_name in teams:
         for player_idx, p_env in enumerate(teams[team_name]):
-            async with websockets.connect(uri) as websocket:
-                sockets[player_idx] = websocket
-                state, dead, game_over = await get_state(team_name, player_idx)
-                p_env.state = state
+            sockets[player_idx] = websocket
+            state, dead, game_over = await get_state(team_name, player_idx)
+            p_env.state = state
 
     count = 0
     while not game_over:
@@ -134,7 +131,13 @@ async def run_game(batch_size, epochs, num_teams = 3, num_players = 2, death_gam
 
     return model
 
-asyncio.get_event_loop().run_until_complete(run_game(1, 2))
+async def main():
+    uri = "ws://localhost:5678"
+    async with websockets.connect(uri) as websocket:
+        await run_game(websocket, 1, 2)
+        #print(websocket.recv())
+
+asyncio.get_event_loop().run_until_complete(main())
 asyncio.get_event_loop().run_forever()
 
 
