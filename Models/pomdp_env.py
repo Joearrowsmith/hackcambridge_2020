@@ -106,7 +106,7 @@ class MultiAgentEnv(gym.Env):
                 output = None
             else:
                 ## not dead
-                output = obs_state, action, reward, done
+                output = obs_state, action, reward, False
 
         if output is None:
             assert dead, "for a non output player must be dead"
