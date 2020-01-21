@@ -78,7 +78,7 @@ def clear_queue():
 async def game_tick(game):
     while True:
         if game.state == -1:
-            if len(connections) >= 1:
+            if len(connections) >= 2:
                 game.state = 0
 
             print("state -1")

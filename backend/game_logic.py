@@ -39,12 +39,13 @@ class Game:
         #1 - Game running
         #2 - Game finished
         self.state = -1
-        self.start_countdown = 2
+        self.start_countdown = 5
         self.alive_count = 0        
         self.teamcount = 1
         self.team_alive = {}
         self.shrink_counter = 5
         self.winner = False
+        
 
     def shrink(self):
         self.board = grid.map_shrink(self.board)
@@ -154,7 +155,7 @@ class Game:
             
         
     def generate_map(self):
-        return np.loadtxt("map_4060.txt")
+        return np.loadtxt("backend/map_4060.txt")
 
     def run_die(self, pid):
         pid.alive = False
@@ -248,14 +249,8 @@ class Game:
     def push_player_down(self, player):
         print("Pushing down")
 
-def load_config(path):
-    with open(path) as f:
-        config = json.load(f)
-    return config
-
 if __name__ == "__main__":
-    config = load_config("./config.json") 
-    game = Game(config=config)
+    game = Game()
     server.run_server("127.0.0.1", 5678, game)
     
 
