@@ -64,7 +64,7 @@ var map = [[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
 [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
  [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]];
 
-var ws = new WebSocket("ws://86737b81.eu.ngrok.io/");
+var ws = new WebSocket("ws://localhost:5678/");
 
 // END OF GLOBAL VARIABLES
 /* ----------------------------- */
@@ -90,6 +90,8 @@ ws.onopen = function() {
     } else if(dataJSON.response == "status") {
       if(dataJSON.response_data == "death"){
         overlayText("Game Over.");
+      } else if(dataJSON.response_data == 'winner') {
+        overlayText("YOU WON.");
       }
     }
 
@@ -295,6 +297,7 @@ function addPlayer(playerLocs) {
     { "x_axis": 80, "y_axis": 100, "color" : "purple"},
     { "x_axis": 400, "y_axis": 200, "color" : "red"}];
   */
+  var colours = ['red', 'blue', 'orange', 'purple', 'black', 'green'];
   playerLocs = [playerLocs];
   var p = svg.selectAll("players")
     .data(playerLocs)
@@ -306,7 +309,7 @@ function addPlayer(playerLocs) {
     .attr("type", 'player')
     .attr("width", sz)
     .attr("height", sz)
-    .style("fill", "red");
+    .style("fill", colours[Math.floor(Math.random() * 6)]);
 }
 
 
@@ -343,13 +346,15 @@ function fogRemoval() {
 
 function overlayText(text) {
   svg.append("text")
-        .attr("x", w / 2 - textWidth / 2)
+        .attr("x", w / 2)
         .attr("y", h / 2)
         .attr("class", "bigTextStroke")
+        .attr("font-size","70px")
         .text(text);
   svg.append("text")
-    .attr("x", w / 2 - textWidth / 2)
+    .attr("x", w / 2)
     .attr("y", h / 2)
+    .attr("font-size","70px")
     .attr("class", "bigText")
     .text(text);
 }
